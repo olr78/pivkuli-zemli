@@ -351,16 +351,24 @@ const qbar=document.getElementById("quizbar");
 function newQuestion(){
   const all=[...Object.keys(CONT).map(k=>["c",k]),...Object.keys(OCEAN).map(k=>["o",k])];
   let q; do{ q=all[Math.floor(Math.random()*all.length)]; } while(quiz.last && q[1]===quiz.last);
-  quiz.q=q; quiz.last=q[1];
-  const name=q[0]==="c"?CONT[q[1]].name:OCEAN[q[1]].name;
-  qbar.innerHTML=`Знайдіть на карті: <b>${name}</b> &nbsp;·&nbsp; рахунок ${quiz.ok}/${quiz.n}<span class="res">${quiz.msg||""}</span>`;
+  quiz.q=q; quiz.last=q[1]; quiz.missed=false;
+  renderQuiz();
+}
+function qName(type,k){ return type==="c"?CONT[k].name:OCEAN[k].name; }
+function renderQuiz(){
+  qbar.innerHTML=`Знайдіть на карті: <b>${qName(quiz.q[0],quiz.q[1])}</b> &nbsp;·&nbsp; рахунок ${quiz.ok}/${quiz.n}<span class="res">${quiz.msg||""}</span>`;
 }
 function answer(type,k){
-  quiz.n++;
-  const want=quiz.q, wname=want[0]==="c"?CONT[want[1]].name:OCEAN[want[1]].name;
-  if(type===want[0]&&k===want[1]){quiz.ok++;quiz.msg=`<span class="ok">✓ Правильно, це ${wname}!</span>`;}
-  else{ const got=type==="c"?CONT[k].name:OCEAN[k].name; quiz.msg=`<span class="bad">✗ Це ${got}, а не ${wname}.</span>`; }
-  newQuestion();
+  const want=quiz.q, wname=qName(want[0],want[1]);
+  if(type===want[0]&&k===want[1]){
+    if(!quiz.missed){quiz.ok++;quiz.n++;}
+    quiz.msg=`<span class="ok">✓ Правильно, це ${wname}! Наступне питання вище.</span>`;
+    newQuestion();
+  } else {
+    if(!quiz.missed){quiz.n++;quiz.missed=true;}
+    quiz.msg=`<span class="bad">✗ Ви вибрали: ${qName(type,k)}. Шукайте далі: ${wname}.</span>`;
+    renderQuiz();
+  }
 }
 document.getElementById("bQuiz").onclick=function(){
   if(quiz){quiz=null;qbar.style.display="none";this.classList.remove("on");document.getElementById("globes").classList.remove("hidelabels");
