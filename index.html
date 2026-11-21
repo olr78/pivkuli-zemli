@@ -42,6 +42,8 @@
   .lbl.line{font-size:10px;font-weight:600;fill:#7a1f1f;stroke:#fff;stroke-width:2.5px}
   .hidelabels .lbl{display:none}
   .nograt .grat{display:none}
+  .ob{fill:none;stroke:#0d4a73;stroke-width:1.4;stroke-dasharray:7 4;stroke-opacity:.75;stroke-linejoin:round}
+  .noob .ob{display:none}
   #tip{position:fixed;pointer-events:none;background:rgba(31,42,51,.92);color:#fff;padding:5px 9px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .1s;z-index:5;white-space:nowrap}
   .bottom{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1fr);gap:16px;max-width:1100px;margin:14px auto 30px;padding:0 16px}
   @media (max-width:760px){.bottom{grid-template-columns:1fr}}
@@ -78,6 +80,7 @@
   <div class="seg">
     <button id="bLabels" class="on">Підписи</button>
     <button id="bGrat" class="on">Градусна сітка</button>
+    <button id="bOB" class="on">Межі океанів</button>
   </div>
   <button class="solo" id="bReset">↺ Скинути оберт</button>
   <button class="solo" id="bQuiz">🎯 Вікторина</button>
@@ -90,7 +93,8 @@
   <div class="card" id="info">
     <div class="hint">Клацніть на материк або океан на карті чи в легенді, щоб побачити його опис.<br><br>
     <b style="color:#b33">Червона пунктирна лінія</b> показує екватор, він ділить Землю на Північну і Південну півкулі.<br>
-    <b style="color:#335">Синя пунктирна лінія</b> показує нульовий (Гринвіцький) меридіан. Класичний поділ на Західну і Східну півкулі проходить по меридіанах 20° з. д. і 160° с. д., щоб не «різати» Європу й Африку.</div>
+    <b style="color:#335">Синя пунктирна лінія</b> показує нульовий (Гринвіцький) меридіан. Класичний поділ на Західну і Східну півкулі проходить по меридіанах 20° з. д. і 160° с. д., щоб не «різати» Європу й Африку.<br>
+    <b style="color:#0d4a73">Темно-сині штрихові лінії на воді</b> позначають межі океанів: Північного Льодовитого по Північному полярному колу, Південного по 60° пд. ш., а між Атлантичним, Індійським і Тихим по меридіанах мисів Голковий (20° с. д.), Горн і через Південно-Східну Азію та Австралію. Межі спрощені.</div>
   </div>
   <div class="card">
     <h2>Материки</h2>
@@ -156,22 +160,43 @@ const OCEAN = {
        labels:[[-60,-64],[100,-62],[-160,-65],[20,-60]]},
 };
 
-// Межі океанів на воді (спрощено)
+function lerp(tbl,x){ for(let i=1;i<tbl.length;i++){ if(x<=tbl[i][0]){const [x0,y0]=tbl[i-1],[x1,y1]=tbl[i]; return y0+(y1-y0)*(x-x0)/(x1-x0);} } return tbl[tbl.length-1][1]; }
+const SUNDA=[[95.3,5.6],[100,0],[104.5,-5.9],[106,-7.6],[114.5,-8.8]];
+const ISTHMUS=[[-84,10.3],[-83,9.3],[-81.5,8.8],[-80,9.0],[-79,9.2],[-78,8.7],[-77,8.0]];
+const AMER=[[7,-77],[11,-84.8],[12,-85.5],[13,-85.5],[14,-87],[15,-89],[16,-91],[17,-93],[18,-98],[19,-100],[21,-101],[90,-101]];
 function oceanAt(lon,lat){
-  if(lat>=66) return "arc";
+  if(lat>=66.5) return "arc";
   if(lat<=-60) return "sou";
   if(lon>180) lon-=360; if(lon<-180) lon+=360;
   if(lat>30 && lon>=42 && lon<=100) return null;      // внутрішні водойми (Каспій тощо)
   if(lat>30 && lon>=20 && lon<42) return "atl";        // Середземне й Чорне моря
-  if(lon>=20){
-    if(lat>0)  return lon>100 ? "pac" : "ind";
-    if(lat>-10) return lon>128 ? "pac" : "ind";
-    return lon>147 ? "pac" : "ind";
+  if(lon>=20){                                         // Індійський / Тихий
+    if(lat<=-25) return lon<147?"ind":"pac";
+    if(lat<=-9) return lon<129.5?"ind":"pac";
+    if(lon>=114.5) return "pac";
+    if(lon>=95.3){
+      if(lat<lerp(SUNDA,lon)) return "ind";
+      if(lat<1) return "pac";
+      if(lat<6.5) return lon<101.5+(6.5-lat)*0.5?"ind":"pac";
+      if(lat<9) return lon<100.2?"ind":"pac";
+      return lon<98.9?"ind":"pac";
+    }
+    return "ind";
   }
-  let b;                                               // межа Атлантика/Тихий
-  if(lat<8) b=-68; else if(lat<=17) b=-85; else b=-100;
-  return lon<b ? "pac" : "atl";
+  let b;                                               // Атлантичний / Тихий
+  if(lat<-55) b=-67.3; else if(lat<-40) b=-71; else if(lat<-19) b=-68; else if(lat<-13) b=-70; else if(lat<7) b=-76;
+  else if(lat<=11 && lon>=-84 && lon<=-77) return lat>lerp(ISTHMUS,lon)?"atl":"pac";
+  else b=lerp(AMER,lat);
+  return lon<b?"pac":"atl";
 }
+// Межі океанів для малювання
+const OB={type:"MultiLineString",coordinates:[
+  Array.from({length:181},(_,i)=>[-180+i*2,66.5]),
+  Array.from({length:181},(_,i)=>[-180+i*2,-60]),
+  [[20,-60],[20,-34.8]],
+  [[147,-60],[147,-25],[129.5,-25],[129.5,-9],[114.5,-9],[114.5,-8.8],[106,-7.6],[104.5,-5.9],[100,0],[99.16,1],[104.25,1],[101.5,6.5],[100.2,6.5],[100.2,9],[98.9,9],[98.9,18]],
+  [[-67.3,-60],[-67.3,-55],[-71,-55],[-71,-40],[-68,-40],[-68,-19],[-70,-19],[-70,-13],[-76,-13],[-76,7],[-77,8],[-78,8.7],[-79,9.2],[-80,9.0],[-81.5,8.8],[-83,9.3],[-84,10.3],[-84.8,11],[-85.5,12],[-85.5,13],[-87,14],[-89,15],[-91,16],[-93,17],[-98,18],[-100,19],[-101,21],[-101,66.5]]
+]};
 
 
 const NA=["Canada","United States of America","Mexico","Greenland","Bahamas","Haiti","Dominican Rep.","Panama","Costa Rica","Nicaragua","Honduras","El Salvador","Guatemala","Belize","Puerto Rico","Jamaica","Cuba"];
@@ -227,13 +252,14 @@ function makeGlobe(i){
   const path=d3.geoPath(proj);
   const sea=svg.append("path").datum({type:"Sphere"}).attr("fill",`url(#${gid})`).attr("class","seaP");
   const gr=svg.append("path").datum(grat).attr("class","grat");
+  const ob=svg.append("path").datum(OB).attr("class","ob");
   const lands=svg.append("g").selectAll("path").data(features).join("path")
     .attr("class","land").attr("fill",d=>CONT[d.id]?CONT[d.id].color:"var(--isl)");
   const eq=svg.append("path").datum(equator).attr("class","eq");
   const pm=svg.append("path").datum(primeM).attr("class","pm");
   svg.append("path").datum({type:"Sphere"}).attr("class","rim");
   const lg=svg.append("g");
-  const g={svg,cap,proj,path,sea,gr,lands,eq,pm,lg};
+  const g={svg,cap,proj,path,sea,gr,ob,lands,eq,pm,lg};
 
   // взаємодія з суходолом
   lands.on("mousemove",(e,d)=>{ if(!CONT[d.id]) return showTip(e,"Острови"); hoverC(d.id); showTip(e,CONT[d.id].name);})
@@ -268,7 +294,7 @@ function visible(g,ll){
   return d3.geoDistance(ll,[-r[0],-r[1]]);
 }
 function draw(g){
-  g.sea.attr("d",g.path); g.gr.attr("d",g.path); g.lands.attr("d",g.path);
+  g.sea.attr("d",g.path); g.gr.attr("d",g.path); g.ob.attr("d",g.path); g.lands.attr("d",g.path);
   g.eq.attr("d",g.path); g.pm.attr("d",g.path);
   g.svg.selectAll(".rim").attr("d",g.path);
   const items=[];
@@ -380,6 +406,7 @@ document.getElementById("bQuiz").onclick=function(){
 document.querySelectorAll("#viewSeg button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
 document.getElementById("bReset").onclick=()=>setView(view);
 document.getElementById("bLabels").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("hidelabels",!this.classList.contains("on"));};
+document.getElementById("bOB").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("noob",!this.classList.contains("on"));};
 document.getElementById("bGrat").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("nograt",!this.classList.contains("on"));};
 
 document.getElementById("globes").innerHTML="";
