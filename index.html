@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Півкулі Землі — інтерактивна карта</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --ink:#1f2a33; --muted:#5d6b75; --card:#fffdf8; --line:#d9d2c3;
+    --sea1:#bfe0f2; --sea2:#7fb9dc; --accent:#c2410c;
+    --eu:#e3a857; --af:#d9734e; --na:#7cb36b; --sa:#4f9a7a; --au:#c9a33a; --an:#eef3f7; --isl:#bbb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:22px 24px 6px;text-align:center}
+  h1{margin:0;font-size:clamp(22px,3vw,32px);letter-spacing:.3px}
+  .sub{color:var(--muted);margin-top:6px;font-size:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px 16px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  button{font:inherit;font-size:14px;border:0;background:var(--card);color:var(--ink);padding:8px 14px;cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  button:hover{background:#f0e9db}
+  button.on{background:var(--ink);color:#fff}
+  .solo{border:1px solid var(--line);border-radius:10px}
+  .globes{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;padding:4px 12px}
+  figure{margin:0;text-align:center}
+  figcaption{font-weight:600;font-size:17px;margin-bottom:4px}
+  figcaption small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+  svg.globe{width:min(46vw,520px);height:auto;touch-action:none;cursor:grab;display:block}
+  svg.globe:active{cursor:grabbing}
+  @media (max-width:760px){svg.globe{width:min(92vw,520px)}}
+  .land{stroke:#6b5a3e;stroke-width:.5;stroke-linejoin:round;transition:filter .15s}
+  .land.hover{filter:brightness(1.12) saturate(1.2);stroke:#222;stroke-width:1.2}
+  .land.sel{stroke:var(--accent);stroke-width:2}
+  .grat{fill:none;stroke:#ffffff;stroke-opacity:.55;stroke-width:.5}
+  .eq{fill:none;stroke:#b33;stroke-width:1.1;stroke-dasharray:5 3}
+  .pm{fill:none;stroke:#335;stroke-width:1;stroke-dasharray:2 3}
+  .rim{fill:none;stroke:#3c5a6e;stroke-width:1.5}
+  .lbl{pointer-events:none;text-anchor:middle;dominant-baseline:middle;font-weight:700;paint-order:stroke;stroke-linejoin:round}
+  .lbl.c{font-size:15px;fill:#2a2015;stroke:#fffdf5;stroke-width:3.5px}
+  .lbl.o{font-size:13px;fill:#0d4a73;stroke:#d9eef9;stroke-width:3px;font-style:italic;letter-spacing:.5px}
+  .lbl.line{font-size:10px;font-weight:600;fill:#7a1f1f;stroke:#fff;stroke-width:2.5px}
+  .hidelabels .lbl{display:none}
+  .nograt .grat{display:none}
+  #tip{position:fixed;pointer-events:none;background:rgba(31,42,51,.92);color:#fff;padding:5px 9px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .1s;z-index:5;white-space:nowrap}
+  .bottom{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1fr);gap:16px;max-width:1100px;margin:14px auto 30px;padding:0 16px}
+  @media (max-width:760px){.bottom{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .card h2{margin:0 0 10px;font-size:17px}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+  .legend div{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:3px 4px;border-radius:6px}
+  .legend div:hover{background:#f0e9db}
+  .sw{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.25);flex:none}
+  #info h3{margin:0 0 6px;font-size:20px}
+  #info .kind{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+  #info dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 8px;font-size:14px}
+  #info dt{color:var(--muted)} #info dd{margin:0;font-weight:600}
+  #info p{margin:6px 0 0;font-size:14px;line-height:1.45}
+  .hint{color:var(--muted);font-size:13px;line-height:1.5}
+  #quizbar{display:none;max-width:700px;margin:6px auto 0;text-align:center;background:#1f2a33;color:#fff;border-radius:12px;padding:10px 14px;font-size:15px}
+  #quizbar b{color:#ffd27a}
+  #quizbar .res{display:block;font-size:13px;margin-top:3px;min-height:1.2em}
+  .ok{color:#8ee68e}.bad{color:#ff9d8a}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:0 16px 24px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Півкулі Землі</h1>
+  <div class="sub">Перетягуйте глобуси, щоб обертати. Наведіть курсор на материк чи океан, клацніть, щоб побачити довідку.</div>
+</header>
+
+<div class="controls">
+  <div class="seg" id="viewSeg">
+    <button data-view="we" class="on">Західна і Східна</button>
+    <button data-view="ns">Північна і Південна</button>
+  </div>
+  <div class="seg">
+    <button id="bLabels" class="on">Підписи</button>
+    <button id="bGrat" class="on">Градусна сітка</button>
+  </div>
+  <button class="solo" id="bReset">↺ Скинути оберт</button>
+  <button class="solo" id="bQuiz">🎯 Вікторина</button>
+</div>
+<div id="quizbar"></div>
+
+<div class="globes" id="globes"><p style="color:#5d6b75">Завантаження карти…</p></div>
+
+<div class="bottom">
+  <div class="card" id="info">
+    <div class="hint">Клацніть на материк або океан на карті чи в легенді, щоб побачити його опис.<br><br>
+    <b style="color:#b33">Червона пунктирна лінія</b> показує екватор, він ділить Землю на Північну і Південну півкулі.<br>
+    <b style="color:#335">Синя пунктирна лінія</b> показує нульовий (Гринвіцький) меридіан. Класичний поділ на Західну і Східну півкулі проходить по меридіанах 20° з. д. і 160° с. д., щоб не «різати» Європу й Африку.</div>
+  </div>
+  <div class="card">
+    <h2>Материки</h2>
+    <div class="legend" id="legC"></div>
+    <h2 style="margin-top:14px">Океани</h2>
+    <div class="legend" id="legO"></div>
+  </div>
+</div>
+<footer>Дані про суходіл: Natural Earth (1:110 млн), через world-atlas. Площі й висоти наведено приблизно.</footer>
+<div id="tip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+
+const CONT = {
+  eu:{name:"Євразія",color:"var(--eu)",
+      area:"≈ 54,8 млн км²",pop:"≈ 5,4 млрд",high:"Джомолангма (Еверест), 8849 м",
+      hemi:"Північна; переважно Східна",
+      text:"Найбільший материк. На ньому лежать дві частини світу, Європа та Азія, а межу між ними проводять Уральськими горами, річкою Урал, Кавказом і протоками. Його омивають усі океани, крім Південного.",
+      labels:[[85,52],[20,52],[110,40]]},
+  af:{name:"Африка",color:"var(--af)",
+      area:"≈ 30,3 млн км²",pop:"≈ 1,5 млрд",high:"Кіліманджаро, 5895 м",
+      hemi:"Перетинають і екватор, і нульовий меридіан",
+      text:"Другий за площею материк і найспекотніший. Тут найбільша пустеля, Сахара, і одна з найдовших річок світу, Ніл.",
+      labels:[[20,5],[25,-15]]},
+  na:{name:"Північна Америка",color:"var(--na)",
+      area:"≈ 24,2 млн км²",pop:"≈ 600 млн",high:"Деналі (Мак-Кінлі), 6190 м",
+      hemi:"Північна і Західна",
+      text:"Третій за площею материк, з'єднаний із Південною Америкою Панамським перешийком. До цієї частини світу належить і Гренландія, найбільший острів Землі.",
+      labels:[[-100,45],[-100,40]]},
+  sa:{name:"Південна Америка",color:"var(--sa)",
+      area:"≈ 17,8 млн км²",pop:"≈ 440 млн",high:"Аконкагуа, 6961 м",
+      hemi:"Переважно Південна; Західна",
+      text:"Тут тече Амазонка, найповноводніша річка світу, і ростуть найбільші тропічні ліси. Уздовж західного узбережжя тягнуться Анди, найдовша гірська система суходолу.",
+      labels:[[-60,-15],[-62,-25]]},
+  au:{name:"Австралія",color:"var(--au)",
+      area:"≈ 7,7 млн км²",pop:"≈ 27 млн",high:"Косцюшко, 2228 м",
+      hemi:"Південна і Східна",
+      text:"Найменший і найпосушливіший материк, цілком у Південній півкулі. Разом з островами Тихого океану (Нова Зеландія, Нова Гвінея, Полінезія) утворює частину світу Австралія та Океанія.",
+      labels:[[134,-25],[134,-28]]},
+  an:{name:"Антарктида",color:"var(--an)",
+      area:"≈ 14,1 млн км²",pop:"постійного немає",high:"Масив Вінсон, 4892 м",
+      hemi:"Південна; розташована навколо Південного полюса",
+      text:"Найхолодніший і найвищий у середньому материк, майже повністю вкритий льодом, товщина якого сягає 4,7 км. Тут працює українська станція «Академік Вернадський».",
+      labels:[[0,-84],[-100,-78],[60,-77],[150,-78]]},
+};
+const OCEAN = {
+  pac:{name:"Тихий океан",area:"≈ 165 млн км²",deep:"Маріанська западина, ≈ 10 994 м",
+       text:"Найбільший і найглибший океан, площею більший за весь суходіл разом. Уздовж його берегів тягнеться «Тихоокеанське вогняне кільце» вулканів.",
+       labels:[[-150,5],[170,15],[-130,-30],[175,-20],[-130,-45],[-165,42]]},
+  atl:{name:"Атлантичний океан",area:"≈ 85 млн км²",deep:"Жолоб Пуерто-Рико, ≈ 8376 м",
+       text:"Другий за площею океан. Його дном з півночі на південь тягнеться Серединно-Атлантичний хребет. Атлантика відокремлює Америку від Європи й Африки.",
+       labels:[[-35,28],[-18,-20],[-30,10],[-50,25]]},
+  ind:{name:"Індійський океан",area:"≈ 70 млн км²",deep:"Зондський (Яванський) жолоб, ≈ 7200 м",
+       text:"Третій за площею і найтепліший океан. Він розташований переважно в Південній півкулі, між Африкою, Азією, Австралією й Антарктидою.",
+       labels:[[78,-20],[75,-10],[75,-40]]},
+  arc:{name:"Північний Льодовитий океан",area:"≈ 15 млн км²",deep:"Западина Моллой, ≈ 5550 м",
+       text:"Найменший і наймілкіший океан, розташований навколо Північного полюса. Значна частина його поверхні вкрита кригою.",
+       labels:[[0,84],[-100,79],[110,79],[170,80]]},
+  sou:{name:"Південний океан",area:"≈ 22 млн км²",deep:"Південно-Сандвічев жолоб, ≈ 7434 м",
+       text:"Води навколо Антарктиди, до приблизно 60° пд. ш. Міжнародна гідрографічна організація виділила його як окремий океан, хоча багато підручників і досі рахують чотири океани.",
+       labels:[[-60,-64],[100,-62],[-160,-65],[20,-60]]},
+};
+
+// Межі океанів на воді (спрощено)
+function oceanAt(lon,lat){
+  if(lat>=66) return "arc";
+  if(lat<=-60) return "sou";
+  if(lon>180) lon-=360; if(lon<-180) lon+=360;
+  if(lat>30 && lon>=42 && lon<=100) return null;      // внутрішні водойми (Каспій тощо)
+  if(lat>30 && lon>=20 && lon<42) return "atl";        // Середземне й Чорне моря
+  if(lon>=20){
+    if(lat>0)  return lon>100 ? "pac" : "ind";
+    if(lat>-10) return lon>128 ? "pac" : "ind";
+    return lon>147 ? "pac" : "ind";
+  }
+  let b;                                               // межа Атлантика/Тихий
+  if(lat<8) b=-68; else if(lat<=17) b=-85; else b=-100;
+  return lon<b ? "pac" : "atl";
+}
+
+
+const NA=["Canada","United States of America","Mexico","Greenland","Bahamas","Haiti","Dominican Rep.","Panama","Costa Rica","Nicaragua","Honduras","El Salvador","Guatemala","Belize","Puerto Rico","Jamaica","Cuba"];
+const SA=["Argentina","Chile","Falkland Is.","Uruguay","Brazil","Bolivia","Peru","Colombia","Venezuela","Guyana","Suriname","Ecuador","Paraguay","Trinidad and Tobago"];
+const AU=["Australia","Papua New Guinea","New Zealand","Fiji","Vanuatu","New Caledonia","Solomon Is."];
+const AF=["Tanzania","W. Sahara","Dem. Rep. Congo","Somalia","Kenya","Sudan","Chad","South Africa","Lesotho","Zimbabwe","Botswana","Namibia","Senegal","Mali","Mauritania","Benin","Niger","Nigeria","Cameroon","Togo","Ghana","Côte d'Ivoire","Guinea","Guinea-Bissau","Liberia","Sierra Leone","Burkina Faso","Central African Rep.","Congo","Gabon","Eq. Guinea","Zambia","Malawi","Mozambique","eSwatini","Angola","Burundi","Madagascar","Gambia","Tunisia","Algeria","Eritrea","Morocco","Egypt","Libya","Ethiopia","Djibouti","Somaliland","Uganda","Rwanda","S. Sudan"];
+function contOf(n,c){
+  if(n==="Antarctica")return "an"; if(n==="Fr. S. Antarctic Lands")return "isl";
+  if(n==="France"&&c[0]<-30)return "sa";
+  if(n==="United States of America"&&c[0]<-150&&c[1]<30)return "au";
+  if(n==="Indonesia"&&c[0]>134)return "au";
+  if(NA.includes(n))return "na"; if(SA.includes(n))return "sa"; if(AU.includes(n))return "au"; if(AF.includes(n))return "af";
+  return "eu";
+}
+function buildLand(t){
+  const groups={};
+  for(const g of t.objects.countries.geometries){
+    for(const p of (g.type==="Polygon"?[g.arcs]:g.arcs)){
+      const geom={type:"Polygon",arcs:p};
+      const k=contOf(g.properties.name,d3.geoCentroid(topojson.feature(t,geom)));
+      (groups[k]=groups[k]||[]).push(geom);
+    }
+  }
+  const out={}; for(const k in groups) out[k]=topojson.merge(t,groups[k]).coordinates; return out;
+}
+fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(r=>r.json()).then(t=>init(buildLand(t)))
+  .catch(()=>{document.getElementById("globes").innerHTML="<p>Не вдалося завантажити дані карти. Перевірте інтернет і оновіть сторінку.</p>";});
+function init(LAND){
+const tip=document.getElementById("tip");
+const features=Object.entries(LAND).map(([k,c])=>({type:"Feature",id:k,geometry:{type:"MultiPolygon",coordinates:c}}));
+const grat=d3.geoGraticule10();
+const equator={type:"LineString",coordinates:d3.range(-180,181,2).map(x=>[x,0])};
+const primeM={type:"LineString",coordinates:d3.range(-90,91,2).map(y=>[0,y])};
+
+const VIEWS={
+  we:[{title:"Західна півкуля",sub:"центр 110° з. д.",rot:[110,0]},{title:"Східна півкуля",sub:"центр 70° с. д.",rot:[-70,0]}],
+  ns:[{title:"Північна півкуля",sub:"центр на Північному полюсі",rot:[0,-90]},{title:"Південна півкуля",sub:"центр на Південному полюсі",rot:[0,90]}],
+};
+let view="we", selected=null, quiz=null;
+const W=520,R=245;
+const globes=[];
+
+function makeGlobe(i){
+  const fig=d3.select("#globes").append("figure");
+  const cap=fig.append("figcaption");
+  const svg=fig.append("svg").attr("class","globe").attr("viewBox",`0 0 ${W} ${W}`);
+  const defs=svg.append("defs");
+  const gid="sea"+i;
+  const rg=defs.append("radialGradient").attr("id",gid).attr("cx","40%").attr("cy","35%").attr("r","70%");
+  rg.append("stop").attr("offset","0%").attr("stop-color","#d8eef9");
+  rg.append("stop").attr("offset","100%").attr("stop-color","#6aa9d1");
+  const proj=d3.geoOrthographic().scale(R).translate([W/2,W/2]).clipAngle(90).precision(.3);
+  const path=d3.geoPath(proj);
+  const sea=svg.append("path").datum({type:"Sphere"}).attr("fill",`url(#${gid})`).attr("class","seaP");
+  const gr=svg.append("path").datum(grat).attr("class","grat");
+  const lands=svg.append("g").selectAll("path").data(features).join("path")
+    .attr("class","land").attr("fill",d=>CONT[d.id]?CONT[d.id].color:"var(--isl)");
+  const eq=svg.append("path").datum(equator).attr("class","eq");
+  const pm=svg.append("path").datum(primeM).attr("class","pm");
+  svg.append("path").datum({type:"Sphere"}).attr("class","rim");
+  const lg=svg.append("g");
+  const g={svg,cap,proj,path,sea,gr,lands,eq,pm,lg};
+
+  // взаємодія з суходолом
+  lands.on("mousemove",(e,d)=>{ if(!CONT[d.id]) return showTip(e,"Острови"); hoverC(d.id); showTip(e,CONT[d.id].name);})
+       .on("mouseleave",()=>{hoverC(null);hideTip();})
+       .on("click",(e,d)=>{ if(g.dragged) return; e.stopPropagation(); if(CONT[d.id]) pick("c",d.id); });
+  // взаємодія з водою
+  sea.on("mousemove",e=>{ const o=oceanUnder(g,e); o?showTip(e,OCEAN[o].name):hideTip(); })
+     .on("mouseleave",hideTip)
+     .on("click",e=>{ if(g.dragged) return; const o=oceanUnder(g,e); if(o) pick("o",o); });
+
+  // обертання
+  let start,r0;
+  svg.call(d3.drag()
+    .on("start",e=>{start=[e.x,e.y];r0=proj.rotate();g.dragged=false;})
+    .on("drag",e=>{
+      const dx=e.x-start[0],dy=e.y-start[1];
+      if(Math.abs(dx)+Math.abs(dy)>3) g.dragged=true;
+      const k=90/R;
+      proj.rotate([r0[0]+dx*k, Math.max(-90,Math.min(90,r0[1]-dy*k)), r0[2]]);
+      draw(g);
+    })
+    .on("end",()=>setTimeout(()=>g.dragged=false,0)));
+  return g;
+}
+function oceanUnder(g,e){
+  const [x,y]=d3.pointer(e,g.svg.node());
+  const ll=g.proj.invert([x,y]); if(!ll) return null;
+  return oceanAt(ll[0],ll[1]);
+}
+function visible(g,ll){
+  const r=g.proj.rotate();
+  return d3.geoDistance(ll,[-r[0],-r[1]]);
+}
+function draw(g){
+  g.sea.attr("d",g.path); g.gr.attr("d",g.path); g.lands.attr("d",g.path);
+  g.eq.attr("d",g.path); g.pm.attr("d",g.path);
+  g.svg.selectAll(".rim").attr("d",g.path);
+  const items=[];
+  for(const [k,c] of Object.entries(CONT)) items.push({k,t:c.name,cls:"c",pts:c.labels});
+  for(const [k,o] of Object.entries(OCEAN)){
+    // океан може бути підписаний на одній півкулі двічі, якщо точки далеко одна від одної
+    const vis=o.labels.filter(p=>visible(g,p)<Math.PI/2*0.8).sort((a,b)=>visible(g,a)-visible(g,b));
+    const chosen=[];
+    for(const p of vis){ if(chosen.every(q=>d3.geoDistance(p,q)>1.1)) chosen.push(p); if(chosen.length===2)break; }
+    chosen.forEach((p,i)=>items.push({k:k+i,t:o.name,cls:"o",pts:[p],fixed:true}));
+  }
+  const data=[];
+  for(const it of items){
+    const best=it.pts.map(p=>[p,visible(g,p)]).sort((a,b)=>a[1]-b[1])[0];
+    if(best[1]<Math.PI/2*0.9){ const xy=g.proj(best[0]); data.push({...it,x:xy[0],y:xy[1]}); }
+  }
+  // підпис екватора
+  const eqp=[-g.proj.rotate()[0]+35,0];
+  if(visible(g,eqp)<1.35){const xy=g.proj(eqp);data.push({k:"eqL",t:"екватор",cls:"line",x:xy[0],y:xy[1]-8});}
+  const sel=g.lg.selectAll("text").data(data,d=>d.k);
+  sel.join(en=>en.append("text"),up=>up,ex=>ex.remove())
+    .attr("class",d=>"lbl "+d.cls).attr("x",d=>d.x).attr("y",d=>d.y)
+    .each(function(d){
+      const el=d3.select(this); el.selectAll("tspan").remove(); el.text(null);
+      const words=d.t.split(" ");
+      if(words.length>1 && d.cls!=="line"){
+        // два рядки для довгих назв
+        const mid=d.cls==="o"&&words.length===3?2:1;
+        const a=words.slice(0,mid).join(" "),b=words.slice(mid).join(" ");
+        el.append("tspan").attr("x",d.x).attr("dy","-0.55em").text(a);
+        el.append("tspan").attr("x",d.x).attr("dy","1.15em").text(b);
+      } else el.text(d.t);
+    });
+}
+function setView(v,animate=true){
+  view=v;
+  VIEWS[v].forEach((cfg,i)=>{
+    const g=globes[i];
+    g.cap.html(`${cfg.title}<small>${cfg.sub}</small>`);
+    const from=g.proj.rotate(), to=[cfg.rot[0],cfg.rot[1],0];
+    if(!animate){g.proj.rotate(to);draw(g);return;}
+    const ip=d3.interpolate(from,to);
+    d3.transition("rot"+i).duration(900).ease(d3.easeCubicInOut).tween("r",()=>t=>{g.proj.rotate(ip(t));draw(g);});
+  });
+  document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
+}
+function hoverC(k){ d3.selectAll(".land").classed("hover",d=>d.id===k); }
+function showTip(e,t){ tip.textContent=t; tip.style.left=(e.clientX+14)+"px"; tip.style.top=(e.clientY+12)+"px"; tip.style.opacity=1; }
+function hideTip(){ tip.style.opacity=0; }
+
+function pick(type,k){
+  if(quiz) return answer(type,k);
+  selected=type==="c"?k:null;
+  d3.selectAll(".land").classed("sel",d=>d.id===selected);
+  const box=document.getElementById("info");
+  if(type==="c"){
+    const c=CONT[k];
+    box.innerHTML=`<div class="kind">Материк</div><h3><span class="sw" style="display:inline-block;vertical-align:-2px;background:${c.color}"></span> ${c.name}</h3>
+      <dl><dt>Площа</dt><dd>${c.area}</dd><dt>Населення</dt><dd>${c.pop}</dd><dt>Найвища точка</dt><dd>${c.high}</dd><dt>Півкулі</dt><dd>${c.hemi}</dd></dl><p>${c.text}</p>`;
+  } else {
+    const o=OCEAN[k];
+    box.innerHTML=`<div class="kind">Океан</div><h3>🌊 ${o.name}</h3>
+      <dl><dt>Площа</dt><dd>${o.area}</dd><dt>Найбільша глибина</dt><dd>${o.deep}</dd></dl><p>${o.text}</p>`;
+  }
+}
+
+// легенда
+const legC=d3.select("#legC").html("");
+for(const [k,c] of Object.entries(CONT)){
+  legC.append("div").html(`<span class="sw" style="background:${c.color}"></span>${c.name}`)
+    .on("mouseenter",()=>hoverC(k)).on("mouseleave",()=>hoverC(null)).on("click",()=>pick("c",k));
+}
+const legO=d3.select("#legO").html("");
+for(const [k,o] of Object.entries(OCEAN)){
+  legO.append("div").html(`<span class="sw" style="background:#7fb9dc"></span>${o.name}`).on("click",()=>pick("o",k));
+}
+
+// вікторина
+const qbar=document.getElementById("quizbar");
+function newQuestion(){
+  const all=[...Object.keys(CONT).map(k=>["c",k]),...Object.keys(OCEAN).map(k=>["o",k])];
+  let q; do{ q=all[Math.floor(Math.random()*all.length)]; } while(quiz.last && q[1]===quiz.last);
+  quiz.q=q; quiz.last=q[1];
+  const name=q[0]==="c"?CONT[q[1]].name:OCEAN[q[1]].name;
+  qbar.innerHTML=`Знайдіть на карті: <b>${name}</b> &nbsp;·&nbsp; рахунок ${quiz.ok}/${quiz.n}<span class="res">${quiz.msg||""}</span>`;
+}
+function answer(type,k){
+  quiz.n++;
+  const want=quiz.q, wname=want[0]==="c"?CONT[want[1]].name:OCEAN[want[1]].name;
+  if(type===want[0]&&k===want[1]){quiz.ok++;quiz.msg=`<span class="ok">✓ Правильно, це ${wname}!</span>`;}
+  else{ const got=type==="c"?CONT[k].name:OCEAN[k].name; quiz.msg=`<span class="bad">✗ Це ${got}, а не ${wname}.</span>`; }
+  newQuestion();
+}
+document.getElementById("bQuiz").onclick=function(){
+  if(quiz){quiz=null;qbar.style.display="none";this.classList.remove("on");document.getElementById("globes").classList.remove("hidelabels");
+    if(document.getElementById("bLabels").classList.contains("on")===false)document.getElementById("globes").classList.add("hidelabels");return;}
+  quiz={ok:0,n:0}; this.classList.add("on"); qbar.style.display="block";
+  document.getElementById("globes").classList.add("hidelabels"); newQuestion();
+};
+
+document.querySelectorAll("#viewSeg button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.getElementById("bReset").onclick=()=>setView(view);
+document.getElementById("bLabels").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("hidelabels",!this.classList.contains("on"));};
+document.getElementById("bGrat").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("nograt",!this.classList.contains("on"));};
+
+document.getElementById("globes").innerHTML="";
+globes.push(makeGlobe(0),makeGlobe(1));
+setView("we",false);
+}
+</script>
+</body>
+</html>
