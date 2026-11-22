@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#f4f1ea; --ink:#1f2a33; --muted:#5d6b75; --card:#fffdf8; --line:#d9d2c3;
-    --sea1:#bfe0f2; --sea2:#7fb9dc; --accent:#c2410c;
+    --accent:#c2410c; --cap:#9b1c1c;
     --eu:#e3a857; --af:#d9734e; --na:#7cb36b; --sa:#4f9a7a; --au:#c9a33a; --an:#eef3f7; --isl:#bbb;
   }
   *{box-sizing:border-box}
@@ -16,33 +16,42 @@
   h1{margin:0;font-size:clamp(22px,3vw,32px);letter-spacing:.3px}
   .sub{color:var(--muted);margin-top:6px;font-size:14px}
   .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px 16px}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
-  button{font:inherit;font-size:14px;border:0;background:var(--card);color:var(--ink);padding:8px 14px;cursor:pointer}
+  .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  button,select{font:inherit;font-size:14px;border:0;background:var(--card);color:var(--ink);padding:8px 13px;cursor:pointer}
   .seg button+button{border-left:1px solid var(--line)}
   button:hover{background:#f0e9db}
   button.on{background:var(--ink);color:#fff}
   .solo{border:1px solid var(--line);border-radius:10px}
+  select{border:1px solid var(--line);border-radius:10px}
   .globes{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;padding:4px 12px}
   figure{margin:0;text-align:center}
   figcaption{font-weight:600;font-size:17px;margin-bottom:4px}
   figcaption small{display:block;font-weight:400;color:var(--muted);font-size:12px}
-  svg.globe{width:min(46vw,520px);height:auto;touch-action:none;cursor:grab;display:block}
+  svg.globe{width:min(46vw,520px);height:auto;touch-action:none;cursor:grab;display:block;user-select:none;-webkit-user-select:none}
   svg.globe:active{cursor:grabbing}
   @media (max-width:760px){svg.globe{width:min(92vw,520px)}}
-  .land{stroke:#6b5a3e;stroke-width:.5;stroke-linejoin:round;transition:filter .15s}
-  .land.hover{filter:brightness(1.12) saturate(1.2);stroke:#222;stroke-width:1.2}
-  .land.sel{stroke:var(--accent);stroke-width:2}
+  .land{stroke:rgba(255,255,255,.55);stroke-width:.5;stroke-linejoin:round;transition:filter .15s}
+  .land.hover{filter:brightness(1.13) saturate(1.25)}
+  .land.sel{fill:#f5d04a !important}
+  .borders{fill:none;stroke:#fff;stroke-opacity:.8;stroke-width:.6;pointer-events:none}
+  .coast{fill:none;stroke:#6b5a3e;stroke-width:.6;stroke-linejoin:round;pointer-events:none}
+  .nocountries .borders{display:none}
+  .nocountries .land{stroke:none}
   .grat{fill:none;stroke:#ffffff;stroke-opacity:.55;stroke-width:.5}
   .eq{fill:none;stroke:#b33;stroke-width:1.1;stroke-dasharray:5 3}
   .pm{fill:none;stroke:#335;stroke-width:1;stroke-dasharray:2 3}
-  .rim{fill:none;stroke:#3c5a6e;stroke-width:1.5}
+  .rim{fill:none;stroke:#3c5a6e;stroke-width:1.5;pointer-events:none}
+  .ob{fill:none;stroke:#0d4a73;stroke-width:1.4;stroke-dasharray:7 4;stroke-opacity:.75;stroke-linejoin:round}
+  .cap{fill:var(--cap);stroke:#fff;stroke-width:1;cursor:pointer}
+  .cap.sel{fill:var(--accent);stroke-width:1.5}
+  .nocaps .cap,.nocaps .lbl.k{display:none}
   .lbl{pointer-events:none;text-anchor:middle;dominant-baseline:middle;font-weight:700;paint-order:stroke;stroke-linejoin:round}
   .lbl.c{font-size:15px;fill:#2a2015;stroke:#fffdf5;stroke-width:3.5px}
   .lbl.o{font-size:13px;fill:#0d4a73;stroke:#d9eef9;stroke-width:3px;font-style:italic;letter-spacing:.5px}
   .lbl.line{font-size:10px;font-weight:600;fill:#7a1f1f;stroke:#fff;stroke-width:2.5px}
+  .lbl.k{font-size:11px;font-weight:600;fill:#5b1010;stroke:#fff;stroke-width:2.6px;text-anchor:start}
   .hidelabels .lbl{display:none}
   .nograt .grat{display:none}
-  .ob{fill:none;stroke:#0d4a73;stroke-width:1.4;stroke-dasharray:7 4;stroke-opacity:.75;stroke-linejoin:round}
   .noob .ob{display:none}
   #tip{position:fixed;pointer-events:none;background:rgba(31,42,51,.92);color:#fff;padding:5px 9px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .1s;z-index:5;white-space:nowrap}
   .bottom{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1fr);gap:16px;max-width:1100px;margin:14px auto 30px;padding:0 16px}
@@ -53,15 +62,37 @@
   .legend div{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:3px 4px;border-radius:6px}
   .legend div:hover{background:#f0e9db}
   .sw{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.25);flex:none}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--cap);border:1.5px solid #fff;box-shadow:0 0 0 1px #9993;flex:none;display:inline-block}
   #info h3{margin:0 0 6px;font-size:20px}
   #info .kind{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
   #info dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 8px;font-size:14px}
   #info dt{color:var(--muted)} #info dd{margin:0;font-weight:600}
   #info p{margin:6px 0 0;font-size:14px;line-height:1.45}
   .hint{color:var(--muted);font-size:13px;line-height:1.5}
-  #quizbar{display:none;max-width:700px;margin:6px auto 0;text-align:center;background:#1f2a33;color:#fff;border-radius:12px;padding:10px 14px;font-size:15px}
-  #quizbar b{color:#ffd27a}
-  #quizbar .res{display:block;font-size:13px;margin-top:3px;min-height:1.2em}
+  #search{width:100%;margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:#fff}
+  #sres{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+  #sres button{border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:13px}
+  /* вікторина */
+  #quiz{display:none;max-width:860px;margin:4px auto 8px;background:#1f2a33;color:#fff;border-radius:14px;padding:12px 14px;text-align:center}
+  #quiz .seg{background:#2b3843;border-color:#3c4b57}
+  #quiz .seg button{background:#2b3843;color:#dfe7ee}
+  #quiz .seg button+button{border-left-color:#3c4b57}
+  #quiz .seg button.on{background:#ffd27a;color:#1f2a33}
+  #quiz select{background:#2b3843;color:#fff;border-color:#3c4b57}
+  .qsetup{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px}
+  .qq{font-size:17px;margin:4px 0}
+  .qq b{color:#ffd27a}
+  .qchoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:560px;margin:10px auto 4px}
+  .qchoices button{background:#2b3843;color:#fff;border:1px solid #3c4b57;border-radius:10px;padding:10px;font-size:15px}
+  .qchoices button:hover{background:#364652}
+  .qchoices button.right{background:#2e7d32;border-color:#4caf50}
+  .qchoices button.wrong{background:#9a2c1f;border-color:#e57364}
+  .qchoices button:disabled{cursor:default}
+  .qmsg{min-height:1.3em;font-size:14px;margin-top:4px}
+  .qact{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .qact button{border-radius:9px;background:#2b3843;color:#fff;border:1px solid #3c4b57}
+  .qact button:hover{background:#364652}
+  #qScore{font-size:13px;color:#c9d4dd;margin-right:6px}
   .ok{color:#8ee68e}.bad{color:#ff9d8a}
   footer{text-align:center;color:var(--muted);font-size:12px;padding:0 16px 24px}
 </style>
@@ -69,7 +100,7 @@
 <body>
 <header>
   <h1>Півкулі Землі</h1>
-  <div class="sub">Перетягуйте глобуси, щоб обертати. Наведіть курсор на материк чи океан, клацніть, щоб побачити довідку.</div>
+  <div class="sub">Перетягуйте глобуси, щоб обертати, а коліщатком миші, двома пальцями або кнопками «+» і «−» наближайте. Клацніть на країну, материк чи океан, щоб побачити довідку.</div>
 </header>
 
 <div class="controls">
@@ -78,66 +109,90 @@
     <button data-view="ns">Північна і Південна</button>
   </div>
   <div class="seg">
+    <button id="bCountries" class="on">Країни</button>
+    <button id="bCaps" class="on">Столиці</button>
     <button id="bLabels" class="on">Підписи</button>
-    <button id="bGrat" class="on">Градусна сітка</button>
+    <button id="bGrat" class="on">Сітка</button>
     <button id="bOB" class="on">Межі океанів</button>
   </div>
-  <button class="solo" id="bReset">↺ Скинути оберт</button>
+  <div class="seg">
+    <button id="bZoomOut" title="Віддалити">−</button>
+    <button id="bZoomIn" title="Наблизити">+</button>
+  </div>
+  <button class="solo" id="bReset">↺ Скинути</button>
   <button class="solo" id="bQuiz">🎯 Вікторина</button>
 </div>
-<div id="quizbar"></div>
+
+<div id="quiz">
+  <div class="qsetup">
+    <div class="seg" id="qModes">
+      <button data-m="cmap">Країна на карті</button>
+      <button data-m="cap">Столиця країни</button>
+      <button data-m="ccap">Країна за столицею</button>
+      <button data-m="co">Материки й океани</button>
+    </div>
+    <select id="qRegion" aria-label="Частина світу">
+      <option value="all">Увесь світ</option>
+      <option>Європа</option><option>Азія</option><option>Африка</option>
+      <option>Північна Америка</option><option>Південна Америка</option><option>Австралія й Океанія</option>
+    </select>
+  </div>
+  <div class="qq" id="qQ"></div>
+  <div class="qchoices" id="qCh"></div>
+  <div class="qmsg" id="qMsg"></div>
+  <div class="qact"><span id="qScore"></span><button id="qShow">Показати відповідь</button><button id="qNext">Далі →</button></div>
+</div>
 
 <div class="globes" id="globes"><p style="color:#5d6b75">Завантаження карти…</p></div>
 
 <div class="bottom">
   <div class="card" id="info">
-    <div class="hint">Клацніть на материк або океан на карті чи в легенді, щоб побачити його опис.<br><br>
+    <div class="hint">Клацніть на країну, материк або океан на карті чи в легенді, щоб побачити його опис.<br><br>
     <b style="color:#b33">Червона пунктирна лінія</b> показує екватор, він ділить Землю на Північну і Південну півкулі.<br>
     <b style="color:#335">Синя пунктирна лінія</b> показує нульовий (Гринвіцький) меридіан. Класичний поділ на Західну і Східну півкулі проходить по меридіанах 20° з. д. і 160° с. д., щоб не «різати» Європу й Африку.<br>
-    <b style="color:#0d4a73">Темно-сині штрихові лінії на воді</b> позначають межі океанів: Північного Льодовитого по Північному полярному колу, Південного по 60° пд. ш., а між Атлантичним, Індійським і Тихим по меридіанах мисів Голковий (20° с. д.), Горн і через Південно-Східну Азію та Австралію. Межі спрощені.</div>
+    <b style="color:#0d4a73">Темно-сині штрихові лінії на воді</b> позначають межі океанів. Північний Льодовитий відділено по Північному полярному колу, Південний по 60° пд. ш. Між Атлантичним, Індійським і Тихим межі проходять по меридіанах мисів Голковий (20° с. д.) і Горн, а також через Південно-Східну Азію та Австралію. Межі спрощені.<br>
+    <span class="dot"></span> Червоні точки позначають столиці. Їхні назви з'являються, коли наблизити карту або вибрати країну.</div>
   </div>
   <div class="card">
     <h2>Материки</h2>
     <div class="legend" id="legC"></div>
     <h2 style="margin-top:14px">Океани</h2>
     <div class="legend" id="legO"></div>
+    <h2 style="margin-top:14px">Пошук країни</h2>
+    <input id="search" type="search" placeholder="Країна або столиця…" autocomplete="off">
+    <div id="sres"></div>
   </div>
 </div>
-<footer>Дані про суходіл: Natural Earth (1:110 млн), через world-atlas. Площі й висоти наведено приблизно.</footer>
+<footer>Кордони країн і суходіл: Natural Earth (1:110 млн), через world-atlas; Крим показано у складі України. Назви: i18n-iso-countries, площі: world-countries. Площі й висоти наведено приблизно. Дрібні острівні держави в масштабі 1:110 млн не показано.</footer>
 <div id="tip"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script>
+const COUNTRIES = {"Fiji":{"n":"Фіджі","c":"Сува","ll":[178.44,-18.14],"r":"Австралія й Океанія","a":18272,"f":"🇫🇯","note":"","q":1},"Tanzania":{"n":"Танзанія","c":"Додома","ll":[35.74,-6.17],"r":"Африка","a":945087,"f":"🇹🇿","note":"","q":1},"W. Sahara":{"n":"Західна Сахара","c":null,"ll":[-13,24.5],"r":"Африка","a":266000,"f":"🇪🇭","note":"Спірна територія.","q":0},"Canada":{"n":"Канада","c":"Оттава","ll":[-75.7,45.42],"r":"Північна Америка","a":9984670,"f":"🇨🇦","note":"","q":1},"United States of America":{"n":"США","c":"Вашингтон","ll":[-77.04,38.9],"r":"Північна Америка","a":9372610,"f":"🇺🇸","note":"","q":1},"Kazakhstan":{"n":"Казахстан","c":"Астана","ll":[71.45,51.17],"r":"Азія","a":2724900,"f":"🇰🇿","note":"","q":1},"Uzbekistan":{"n":"Узбекистан","c":"Ташкент","ll":[69.24,41.3],"r":"Азія","a":447400,"f":"🇺🇿","note":"","q":1},"Papua New Guinea":{"n":"Папуа-Нова Гвінея","c":"Порт-Морсбі","ll":[147.18,-9.44],"r":"Австралія й Океанія","a":462840,"f":"🇵🇬","note":"","q":1},"Indonesia":{"n":"Індонезія","c":"Джакарта","ll":[106.85,-6.21],"r":"Азія","a":1904569,"f":"🇮🇩","note":"","q":1},"Argentina":{"n":"Аргентина","c":"Буенос-Айрес","ll":[-58.38,-34.6],"r":"Південна Америка","a":2780400,"f":"🇦🇷","note":"","q":1},"Chile":{"n":"Чилі","c":"Сантьяго","ll":[-70.67,-33.45],"r":"Південна Америка","a":756102,"f":"🇨🇱","note":"","q":1},"Dem. Rep. Congo":{"n":"ДР Конго","c":"Кіншаса","ll":[15.31,-4.32],"r":"Африка","a":2344858,"f":"🇨🇩","note":"","q":1},"Somalia":{"n":"Сомалі","c":"Могадішо","ll":[45.32,2.05],"r":"Африка","a":637657,"f":"🇸🇴","note":"","q":1},"Kenya":{"n":"Кенія","c":"Найробі","ll":[36.82,-1.29],"r":"Африка","a":580367,"f":"🇰🇪","note":"","q":1},"Sudan":{"n":"Судан","c":"Хартум","ll":[32.56,15.5],"r":"Африка","a":1886068,"f":"🇸🇩","note":"","q":1},"Chad":{"n":"Чад","c":"Нджамена","ll":[15.06,12.13],"r":"Африка","a":1284000,"f":"🇹🇩","note":"","q":1},"Haiti":{"n":"Гаїті","c":"Порт-о-Пренс","ll":[-72.34,18.54],"r":"Північна Америка","a":27750,"f":"🇭🇹","note":"","q":1},"Dominican Rep.":{"n":"Домініканська Республіка","c":"Санто-Домінго","ll":[-69.93,18.49],"r":"Північна Америка","a":48671,"f":"🇩🇴","note":"","q":1},"Russia":{"n":"Росія","c":"Москва","ll":[37.62,55.76],"r":"Європа","a":17098242,"f":"🇷🇺","note":"","q":1},"Bahamas":{"n":"Багамські Острови","c":"Нассау","ll":[-77.35,25.05],"r":"Північна Америка","a":13943,"f":"🇧🇸","note":"","q":1},"Falkland Is.":{"n":"Фолклендські (Мальвінські) острови","c":"Стенлі","ll":[-57.85,-51.7],"r":"Південна Америка","a":12173,"f":"🇫🇰","note":"Британська заморська територія; Аргентина претендує на ці острови.","q":0},"Norway":{"n":"Норвегія","c":"Осло","ll":[10.75,59.91],"r":"Європа","a":323802,"f":"🇳🇴","note":"","q":1},"Greenland":{"n":"Гренландія","c":"Нуук","ll":[-51.72,64.18],"r":"Північна Америка","a":2166086,"f":"🇬🇱","note":"Автономна територія у складі Королівства Данія.","q":0},"Timor-Leste":{"n":"Тимор-Лешті","c":"Ділі","ll":[125.57,-8.56],"r":"Азія","a":14874,"f":"🇹🇱","note":"","q":1},"South Africa":{"n":"ПАР","c":"Преторія","ll":[28.19,-25.75],"r":"Африка","a":1221037,"f":"🇿🇦","note":"Офіційних столиць три: Преторія (уряд), Кейптаун (парламент), Блумфонтейн (суд).","q":1},"Lesotho":{"n":"Лесото","c":"Масеру","ll":[27.48,-29.31],"r":"Африка","a":30355,"f":"🇱🇸","note":"","q":1},"Mexico":{"n":"Мексика","c":"Мехіко","ll":[-99.13,19.43],"r":"Північна Америка","a":1964375,"f":"🇲🇽","note":"","q":1},"Uruguay":{"n":"Уругвай","c":"Монтевідео","ll":[-56.16,-34.9],"r":"Південна Америка","a":181034,"f":"🇺🇾","note":"","q":1},"Brazil":{"n":"Бразилія","c":"Бразиліа","ll":[-47.88,-15.79],"r":"Південна Америка","a":8515767,"f":"🇧🇷","note":"","q":1},"Bolivia":{"n":"Болівія","c":"Сукре","ll":[-65.26,-19.04],"r":"Південна Америка","a":1098581,"f":"🇧🇴","note":"Сукре — конституційна столиця, а уряд і парламент працюють у Ла-Пасі.","q":1},"Peru":{"n":"Перу","c":"Ліма","ll":[-77.04,-12.05],"r":"Південна Америка","a":1285216,"f":"🇵🇪","note":"","q":1},"Colombia":{"n":"Колумбія","c":"Богота","ll":[-74.07,4.71],"r":"Південна Америка","a":1141748,"f":"🇨🇴","note":"","q":1},"Panama":{"n":"Панама","c":"Панама","ll":[-79.52,8.98],"r":"Північна Америка","a":75417,"f":"🇵🇦","note":"","q":1},"Costa Rica":{"n":"Коста-Рика","c":"Сан-Хосе","ll":[-84.08,9.93],"r":"Північна Америка","a":51100,"f":"🇨🇷","note":"","q":1},"Nicaragua":{"n":"Нікарагуа","c":"Манагуа","ll":[-86.24,12.11],"r":"Північна Америка","a":130373,"f":"🇳🇮","note":"","q":1},"Honduras":{"n":"Гондурас","c":"Тегусігальпа","ll":[-87.19,14.07],"r":"Північна Америка","a":112492,"f":"🇭🇳","note":"","q":1},"El Salvador":{"n":"Сальвадор","c":"Сан-Сальвадор","ll":[-89.22,13.69],"r":"Північна Америка","a":21041,"f":"🇸🇻","note":"","q":1},"Guatemala":{"n":"Гватемала","c":"Гватемала","ll":[-90.51,14.63],"r":"Північна Америка","a":108889,"f":"🇬🇹","note":"","q":1},"Belize":{"n":"Беліз","c":"Бельмопан","ll":[-88.76,17.25],"r":"Північна Америка","a":22966,"f":"🇧🇿","note":"","q":1},"Venezuela":{"n":"Венесуела","c":"Каракас","ll":[-66.9,10.48],"r":"Південна Америка","a":916445,"f":"🇻🇪","note":"","q":1},"Guyana":{"n":"Гаяна","c":"Джорджтаун","ll":[-58.16,6.8],"r":"Південна Америка","a":214969,"f":"🇬🇾","note":"","q":1},"Suriname":{"n":"Суринам","c":"Парамарибо","ll":[-55.2,5.85],"r":"Південна Америка","a":163820,"f":"🇸🇷","note":"","q":1},"France":{"n":"Франція","c":"Париж","ll":[2.35,48.86],"r":"Європа","a":551695,"f":"🇫🇷","note":"","q":1},"Ecuador":{"n":"Еквадор","c":"Кіто","ll":[-78.47,-0.18],"r":"Південна Америка","a":276841,"f":"🇪🇨","note":"","q":1},"Puerto Rico":{"n":"Пуерто-Рико","c":"Сан-Хуан","ll":[-66.11,18.47],"r":"Північна Америка","a":8870,"f":"🇵🇷","note":"Територія США.","q":0},"Jamaica":{"n":"Ямайка","c":"Кінгстон","ll":[-76.8,18.02],"r":"Північна Америка","a":10991,"f":"🇯🇲","note":"","q":1},"Cuba":{"n":"Куба","c":"Гавана","ll":[-82.37,23.11],"r":"Північна Америка","a":109884,"f":"🇨🇺","note":"","q":1},"Zimbabwe":{"n":"Зімбабве","c":"Хараре","ll":[31.05,-17.83],"r":"Африка","a":390757,"f":"🇿🇼","note":"","q":1},"Botswana":{"n":"Ботсвана","c":"Габороне","ll":[25.91,-24.65],"r":"Африка","a":582000,"f":"🇧🇼","note":"","q":1},"Namibia":{"n":"Намібія","c":"Віндгук","ll":[17.08,-22.56],"r":"Африка","a":825615,"f":"🇳🇦","note":"","q":1},"Senegal":{"n":"Сенегал","c":"Дакар","ll":[-17.47,14.72],"r":"Африка","a":196722,"f":"🇸🇳","note":"","q":1},"Mali":{"n":"Малі","c":"Бамако","ll":[-8,12.64],"r":"Африка","a":1240192,"f":"🇲🇱","note":"","q":1},"Mauritania":{"n":"Мавританія","c":"Нуакшот","ll":[-15.98,18.09],"r":"Африка","a":1030700,"f":"🇲🇷","note":"","q":1},"Benin":{"n":"Бенін","c":"Порто-Ново","ll":[2.6,6.5],"r":"Африка","a":112622,"f":"🇧🇯","note":"","q":1},"Niger":{"n":"Нігер","c":"Ніамей","ll":[2.11,13.51],"r":"Африка","a":1267000,"f":"🇳🇪","note":"","q":1},"Nigeria":{"n":"Нігерія","c":"Абуджа","ll":[7.4,9.08],"r":"Африка","a":923768,"f":"🇳🇬","note":"","q":1},"Cameroon":{"n":"Камерун","c":"Яунде","ll":[11.5,3.85],"r":"Африка","a":475442,"f":"🇨🇲","note":"","q":1},"Togo":{"n":"Того","c":"Ломе","ll":[1.22,6.13],"r":"Африка","a":56785,"f":"🇹🇬","note":"","q":1},"Ghana":{"n":"Гана","c":"Аккра","ll":[-0.19,5.6],"r":"Африка","a":238533,"f":"🇬🇭","note":"","q":1},"Côte d'Ivoire":{"n":"Кот-д'Івуар","c":"Ямусукро","ll":[-5.29,6.83],"r":"Африка","a":322463,"f":"🇨🇮","note":"","q":1},"Guinea":{"n":"Гвінея","c":"Конакрі","ll":[-13.58,9.64],"r":"Африка","a":245857,"f":"🇬🇳","note":"","q":1},"Guinea-Bissau":{"n":"Гвінея-Бісау","c":"Бісау","ll":[-15.6,11.86],"r":"Африка","a":36125,"f":"🇬🇼","note":"","q":1},"Liberia":{"n":"Ліберія","c":"Монровія","ll":[-10.8,6.3],"r":"Африка","a":111369,"f":"🇱🇷","note":"","q":1},"Sierra Leone":{"n":"Сьєрра-Леоне","c":"Фрітаун","ll":[-13.23,8.48],"r":"Африка","a":71740,"f":"🇸🇱","note":"","q":1},"Burkina Faso":{"n":"Буркіна-Фасо","c":"Уагадугу","ll":[-1.52,12.37],"r":"Африка","a":272967,"f":"🇧🇫","note":"","q":1},"Central African Rep.":{"n":"ЦАР (Центральноафриканська Республіка)","c":"Бангі","ll":[18.56,4.39],"r":"Африка","a":622984,"f":"🇨🇫","note":"","q":1},"Congo":{"n":"Республіка Конго","c":"Браззавіль","ll":[15.24,-4.26],"r":"Африка","a":342000,"f":"🇨🇬","note":"","q":1},"Gabon":{"n":"Габон","c":"Лібревіль","ll":[9.47,0.42],"r":"Африка","a":267668,"f":"🇬🇦","note":"","q":1},"Eq. Guinea":{"n":"Екваторіальна Гвінея","c":"Малабо","ll":[8.78,3.75],"r":"Африка","a":28051,"f":"🇬🇶","note":"","q":1},"Zambia":{"n":"Замбія","c":"Лусака","ll":[28.32,-15.39],"r":"Африка","a":752612,"f":"🇿🇲","note":"","q":1},"Malawi":{"n":"Малаві","c":"Лілонгве","ll":[33.79,-13.96],"r":"Африка","a":118484,"f":"🇲🇼","note":"","q":1},"Mozambique":{"n":"Мозамбік","c":"Мапуту","ll":[32.57,-25.97],"r":"Африка","a":801590,"f":"🇲🇿","note":"","q":1},"eSwatini":{"n":"Есватіні","c":"Мбабане","ll":[31.14,-26.31],"r":"Африка","a":17364,"f":"🇸🇿","note":"","q":1},"Angola":{"n":"Ангола","c":"Луанда","ll":[13.23,-8.84],"r":"Африка","a":1246700,"f":"🇦🇴","note":"","q":1},"Burundi":{"n":"Бурунді","c":"Гітега","ll":[29.93,-3.43],"r":"Африка","a":27834,"f":"🇧🇮","note":"","q":1},"Israel":{"n":"Ізраїль","c":"Єрусалим","ll":[35.21,31.77],"r":"Азія","a":20770,"f":"🇮🇱","note":"Ізраїль проголосив столицею Єрусалим, але більшість країн цього не визнає, і їхні посольства працюють у Тель-Авіві.","q":0},"Lebanon":{"n":"Ліван","c":"Бейрут","ll":[35.5,33.89],"r":"Азія","a":10452,"f":"🇱🇧","note":"","q":1},"Madagascar":{"n":"Мадагаскар","c":"Антананаріву","ll":[47.51,-18.88],"r":"Африка","a":587041,"f":"🇲🇬","note":"","q":1},"Palestine":{"n":"Палестина","c":null,"ll":[35.2,31.9],"r":"Азія","a":6220,"f":"🇵🇸","note":"Статус і столиця спірні.","q":0},"Gambia":{"n":"Гамбія","c":"Банжул","ll":[-16.58,13.45],"r":"Африка","a":10689,"f":"🇬🇲","note":"","q":1},"Tunisia":{"n":"Туніс","c":"Туніс","ll":[10.18,36.81],"r":"Африка","a":163610,"f":"🇹🇳","note":"","q":1},"Algeria":{"n":"Алжир","c":"Алжир","ll":[3.06,36.75],"r":"Африка","a":2381741,"f":"🇩🇿","note":"","q":1},"Jordan":{"n":"Йорданія","c":"Амман","ll":[35.93,31.95],"r":"Азія","a":89342,"f":"🇯🇴","note":"","q":1},"United Arab Emirates":{"n":"Об'єднані Арабські Емірати","c":"Абу-Дабі","ll":[54.38,24.45],"r":"Азія","a":83600,"f":"🇦🇪","note":"","q":1},"Qatar":{"n":"Катар","c":"Доха","ll":[51.53,25.29],"r":"Азія","a":11586,"f":"🇶🇦","note":"","q":1},"Kuwait":{"n":"Кувейт","c":"Ель-Кувейт","ll":[47.99,29.38],"r":"Азія","a":17818,"f":"🇰🇼","note":"","q":1},"Iraq":{"n":"Ірак","c":"Багдад","ll":[44.36,33.31],"r":"Азія","a":438317,"f":"🇮🇶","note":"","q":1},"Oman":{"n":"Оман","c":"Маскат","ll":[58.41,23.59],"r":"Азія","a":309500,"f":"🇴🇲","note":"","q":1},"Vanuatu":{"n":"Вануату","c":"Порт-Віла","ll":[168.32,-17.73],"r":"Австралія й Океанія","a":12189,"f":"🇻🇺","note":"","q":1},"Cambodia":{"n":"Камбоджа","c":"Пномпень","ll":[104.92,11.56],"r":"Азія","a":181035,"f":"🇰🇭","note":"","q":1},"Thailand":{"n":"Таїланд","c":"Бангкок","ll":[100.5,13.76],"r":"Азія","a":513120,"f":"🇹🇭","note":"","q":1},"Laos":{"n":"Лаос","c":"В'єнтьян","ll":[102.63,17.97],"r":"Азія","a":236800,"f":"🇱🇦","note":"","q":1},"Myanmar":{"n":"М'янма","c":"Нейп'їдо","ll":[96.08,19.76],"r":"Азія","a":676578,"f":"🇲🇲","note":"","q":1},"Vietnam":{"n":"В'єтнам","c":"Ханой","ll":[105.85,21.03],"r":"Азія","a":331212,"f":"🇻🇳","note":"","q":1},"North Korea":{"n":"КНДР (Північна Корея)","c":"Пхеньян","ll":[125.76,39.04],"r":"Азія","a":120538,"f":"🇰🇵","note":"","q":1},"South Korea":{"n":"Південна Корея","c":"Сеул","ll":[126.98,37.57],"r":"Азія","a":100210,"f":"🇰🇷","note":"","q":1},"Mongolia":{"n":"Монголія","c":"Улан-Батор","ll":[106.92,47.92],"r":"Азія","a":1564110,"f":"🇲🇳","note":"","q":1},"India":{"n":"Індія","c":"Нью-Делі","ll":[77.21,28.61],"r":"Азія","a":3287590,"f":"🇮🇳","note":"","q":1},"Bangladesh":{"n":"Бангладеш","c":"Дакка","ll":[90.41,23.81],"r":"Азія","a":147570,"f":"🇧🇩","note":"","q":1},"Bhutan":{"n":"Бутан","c":"Тхімпху","ll":[89.64,27.47],"r":"Азія","a":38394,"f":"🇧🇹","note":"","q":1},"Nepal":{"n":"Непал","c":"Катманду","ll":[85.32,27.72],"r":"Азія","a":147181,"f":"🇳🇵","note":"","q":1},"Pakistan":{"n":"Пакистан","c":"Ісламабад","ll":[73.06,33.69],"r":"Азія","a":881912,"f":"🇵🇰","note":"","q":1},"Afghanistan":{"n":"Афганістан","c":"Кабул","ll":[69.17,34.53],"r":"Азія","a":652230,"f":"🇦🇫","note":"","q":1},"Tajikistan":{"n":"Таджикистан","c":"Душанбе","ll":[68.79,38.56],"r":"Азія","a":143100,"f":"🇹🇯","note":"","q":1},"Kyrgyzstan":{"n":"Киргизстан","c":"Бішкек","ll":[74.59,42.87],"r":"Азія","a":199951,"f":"🇰🇬","note":"","q":1},"Turkmenistan":{"n":"Туркменистан","c":"Ашгабат","ll":[58.33,37.96],"r":"Азія","a":488100,"f":"🇹🇲","note":"","q":1},"Iran":{"n":"Іран","c":"Тегеран","ll":[51.39,35.69],"r":"Азія","a":1648195,"f":"🇮🇷","note":"","q":1},"Syria":{"n":"Сирія","c":"Дамаск","ll":[36.29,33.51],"r":"Азія","a":185180,"f":"🇸🇾","note":"","q":1},"Armenia":{"n":"Вірменія","c":"Єреван","ll":[44.51,40.18],"r":"Азія","a":29743,"f":"🇦🇲","note":"","q":1},"Sweden":{"n":"Швеція","c":"Стокгольм","ll":[18.07,59.33],"r":"Європа","a":450295,"f":"🇸🇪","note":"","q":1},"Belarus":{"n":"Білорусь","c":"Мінськ","ll":[27.57,53.9],"r":"Європа","a":207600,"f":"🇧🇾","note":"","q":1},"Ukraine":{"n":"Україна","c":"Київ","ll":[30.52,50.45],"r":"Європа","a":603500,"f":"🇺🇦","note":"","q":1},"Poland":{"n":"Польща","c":"Варшава","ll":[21.01,52.23],"r":"Європа","a":312679,"f":"🇵🇱","note":"","q":1},"Austria":{"n":"Австрія","c":"Відень","ll":[16.37,48.21],"r":"Європа","a":83871,"f":"🇦🇹","note":"","q":1},"Hungary":{"n":"Угорщина","c":"Будапешт","ll":[19.04,47.5],"r":"Європа","a":93028,"f":"🇭🇺","note":"","q":1},"Moldova":{"n":"Молдова","c":"Кишинів","ll":[28.86,47.01],"r":"Європа","a":33846,"f":"🇲🇩","note":"","q":1},"Romania":{"n":"Румунія","c":"Бухарест","ll":[26.1,44.43],"r":"Європа","a":238391,"f":"🇷🇴","note":"","q":1},"Lithuania":{"n":"Литва","c":"Вільнюс","ll":[25.28,54.69],"r":"Європа","a":65300,"f":"🇱🇹","note":"","q":1},"Latvia":{"n":"Латвія","c":"Рига","ll":[24.11,56.95],"r":"Європа","a":64559,"f":"🇱🇻","note":"","q":1},"Estonia":{"n":"Естонія","c":"Таллінн","ll":[24.75,59.44],"r":"Європа","a":45227,"f":"🇪🇪","note":"","q":1},"Germany":{"n":"Німеччина","c":"Берлін","ll":[13.4,52.52],"r":"Європа","a":357114,"f":"🇩🇪","note":"","q":1},"Bulgaria":{"n":"Болгарія","c":"Софія","ll":[23.32,42.7],"r":"Європа","a":110879,"f":"🇧🇬","note":"","q":1},"Greece":{"n":"Греція","c":"Афіни","ll":[23.73,37.98],"r":"Європа","a":131990,"f":"🇬🇷","note":"","q":1},"Turkey":{"n":"Туреччина","c":"Анкара","ll":[32.86,39.93],"r":"Азія","a":783562,"f":"🇹🇷","note":"","q":1},"Albania":{"n":"Албанія","c":"Тирана","ll":[19.82,41.33],"r":"Європа","a":28748,"f":"🇦🇱","note":"","q":1},"Croatia":{"n":"Хорватія","c":"Загреб","ll":[15.98,45.81],"r":"Європа","a":56594,"f":"🇭🇷","note":"","q":1},"Switzerland":{"n":"Швейцарія","c":"Берн","ll":[7.45,46.95],"r":"Європа","a":41284,"f":"🇨🇭","note":"","q":1},"Luxembourg":{"n":"Люксембург","c":"Люксембург","ll":[6.13,49.61],"r":"Європа","a":2586,"f":"🇱🇺","note":"","q":1},"Belgium":{"n":"Бельгія","c":"Брюссель","ll":[4.35,50.85],"r":"Європа","a":30528,"f":"🇧🇪","note":"","q":1},"Netherlands":{"n":"Нідерланди","c":"Амстердам","ll":[4.9,52.37],"r":"Європа","a":41850,"f":"🇳🇱","note":"","q":1},"Portugal":{"n":"Португалія","c":"Лісабон","ll":[-9.14,38.72],"r":"Європа","a":92090,"f":"🇵🇹","note":"","q":1},"Spain":{"n":"Іспанія","c":"Мадрид","ll":[-3.7,40.42],"r":"Європа","a":505992,"f":"🇪🇸","note":"","q":1},"Ireland":{"n":"Ірландія","c":"Дублін","ll":[-6.26,53.35],"r":"Європа","a":70273,"f":"🇮🇪","note":"","q":1},"New Caledonia":{"n":"Нова Каледонія","c":"Нумеа","ll":[166.46,-22.28],"r":"Австралія й Океанія","a":18575,"f":"🇳🇨","note":"Заморська територія Франції.","q":0},"Solomon Is.":{"n":"Соломонові Острови","c":"Хоніара","ll":[159.95,-9.43],"r":"Австралія й Океанія","a":28896,"f":"🇸🇧","note":"","q":1},"New Zealand":{"n":"Нова Зеландія","c":"Веллінгтон","ll":[174.78,-41.29],"r":"Австралія й Океанія","a":270467,"f":"🇳🇿","note":"","q":1},"Australia":{"n":"Австралія","c":"Канберра","ll":[149.13,-35.28],"r":"Австралія й Океанія","a":7692024,"f":"🇦🇺","note":"","q":1},"Sri Lanka":{"n":"Шри-Ланка","c":"Шрі-Джаяварденепура-Котте","ll":[79.9,6.89],"r":"Азія","a":65610,"f":"🇱🇰","note":"Найбільше місто й колишня столиця — Коломбо.","q":1},"China":{"n":"Китай","c":"Пекін","ll":[116.4,39.9],"r":"Азія","a":9706961,"f":"🇨🇳","note":"","q":1},"Taiwan":{"n":"Тайвань","c":"Тайбей","ll":[121.56,25.03],"r":"Азія","a":36193,"f":"🇹🇼","note":"Політичний статус острова спірний.","q":0},"Italy":{"n":"Італія","c":"Рим","ll":[12.5,41.9],"r":"Європа","a":301336,"f":"🇮🇹","note":"","q":1},"Denmark":{"n":"Данія","c":"Копенгаген","ll":[12.57,55.68],"r":"Європа","a":43094,"f":"🇩🇰","note":"","q":1},"United Kingdom":{"n":"Велика Британія","c":"Лондон","ll":[-0.13,51.51],"r":"Європа","a":242900,"f":"🇬🇧","note":"","q":1},"Iceland":{"n":"Ісландія","c":"Рейк'явік","ll":[-21.94,64.15],"r":"Європа","a":103000,"f":"🇮🇸","note":"","q":1},"Azerbaijan":{"n":"Азербайджан","c":"Баку","ll":[49.87,40.41],"r":"Азія","a":86600,"f":"🇦🇿","note":"","q":1},"Georgia":{"n":"Грузія","c":"Тбілісі","ll":[44.79,41.72],"r":"Азія","a":69700,"f":"🇬🇪","note":"","q":1},"Philippines":{"n":"Філіппіни","c":"Маніла","ll":[120.98,14.6],"r":"Азія","a":342353,"f":"🇵🇭","note":"","q":1},"Malaysia":{"n":"Малайзія","c":"Куала-Лумпур","ll":[101.69,3.14],"r":"Азія","a":330803,"f":"🇲🇾","note":"","q":1},"Brunei":{"n":"Бруней","c":"Бандар-Сері-Бегаван","ll":[114.94,4.9],"r":"Азія","a":5765,"f":"🇧🇳","note":"","q":1},"Slovenia":{"n":"Словенія","c":"Любляна","ll":[14.51,46.06],"r":"Європа","a":20273,"f":"🇸🇮","note":"","q":1},"Finland":{"n":"Фінляндія","c":"Гельсінкі","ll":[24.94,60.17],"r":"Європа","a":338424,"f":"🇫🇮","note":"","q":1},"Slovakia":{"n":"Словаччина","c":"Братислава","ll":[17.11,48.15],"r":"Європа","a":49037,"f":"🇸🇰","note":"","q":1},"Czechia":{"n":"Чехія","c":"Прага","ll":[14.44,50.08],"r":"Європа","a":78865,"f":"🇨🇿","note":"","q":1},"Eritrea":{"n":"Еритрея","c":"Асмера","ll":[38.93,15.32],"r":"Африка","a":117600,"f":"🇪🇷","note":"","q":1},"Japan":{"n":"Японія","c":"Токіо","ll":[139.69,35.68],"r":"Азія","a":377930,"f":"🇯🇵","note":"","q":1},"Paraguay":{"n":"Парагвай","c":"Асунсьйон","ll":[-57.58,-25.26],"r":"Південна Америка","a":406752,"f":"🇵🇾","note":"","q":1},"Yemen":{"n":"Ємен","c":"Сана","ll":[44.19,15.37],"r":"Азія","a":527968,"f":"🇾🇪","note":"","q":1},"Saudi Arabia":{"n":"Саудівська Аравія","c":"Ер-Ріяд","ll":[46.68,24.71],"r":"Азія","a":2149690,"f":"🇸🇦","note":"","q":1},"Cyprus":{"n":"Кіпр","c":"Нікосія","ll":[33.36,35.17],"r":"Європа","a":9251,"f":"🇨🇾","note":"","q":1},"Morocco":{"n":"Марокко","c":"Рабат","ll":[-6.83,34.02],"r":"Африка","a":446550,"f":"🇲🇦","note":"","q":1},"Egypt":{"n":"Єгипет","c":"Каїр","ll":[31.24,30.04],"r":"Африка","a":1002450,"f":"🇪🇬","note":"","q":1},"Libya":{"n":"Лівія","c":"Триполі","ll":[13.19,32.89],"r":"Африка","a":1759540,"f":"🇱🇾","note":"","q":1},"Ethiopia":{"n":"Ефіопія","c":"Аддис-Абеба","ll":[38.74,9.03],"r":"Африка","a":1104300,"f":"🇪🇹","note":"","q":1},"Djibouti":{"n":"Джибуті","c":"Джибуті","ll":[43.15,11.59],"r":"Африка","a":23200,"f":"🇩🇯","note":"","q":1},"Uganda":{"n":"Уганда","c":"Кампала","ll":[32.58,0.35],"r":"Африка","a":241550,"f":"🇺🇬","note":"","q":1},"Rwanda":{"n":"Руанда","c":"Кігалі","ll":[30.06,-1.95],"r":"Африка","a":26338,"f":"🇷🇼","note":"","q":1},"Bosnia and Herz.":{"n":"Боснія і Герцеговина","c":"Сараєво","ll":[18.41,43.86],"r":"Європа","a":51209,"f":"🇧🇦","note":"","q":1},"Macedonia":{"n":"Північна Македонія","c":"Скоп'є","ll":[21.43,41.99],"r":"Європа","a":25713,"f":"🇲🇰","note":"","q":1},"Serbia":{"n":"Сербія","c":"Белград","ll":[20.45,44.79],"r":"Європа","a":88361,"f":"🇷🇸","note":"","q":1},"Montenegro":{"n":"Чорногорія","c":"Подгориця","ll":[19.26,42.44],"r":"Європа","a":13812,"f":"🇲🇪","note":"","q":1},"Kosovo":{"n":"Косово","c":"Приштина","ll":[21.17,42.66],"r":"Європа","a":null,"f":"","note":"Незалежність визнана частиною країн світу; Україна її не визнає.","q":0},"Trinidad and Tobago":{"n":"Тринідад і Тобаго","c":"Порт-оф-Спейн","ll":[-61.51,10.66],"r":"Північна Америка","a":5130,"f":"🇹🇹","note":"","q":1},"S. Sudan":{"n":"Південний Судан","c":"Джуба","ll":[31.58,4.85],"r":"Африка","a":619745,"f":"🇸🇸","note":"","q":1}};
 
 const CONT = {
-  eu:{name:"Євразія",color:"var(--eu)",
-      area:"≈ 54,8 млн км²",pop:"≈ 5,4 млрд",high:"Джомолангма (Еверест), 8849 м",
+  eu:{name:"Євразія",color:"var(--eu)",area:"≈ 54,8 млн км²",pop:"≈ 5,4 млрд",high:"Джомолангма (Еверест), 8849 м",
       hemi:"Північна; переважно Східна",
       text:"Найбільший материк. На ньому лежать дві частини світу, Європа та Азія, а межу між ними проводять Уральськими горами, річкою Урал, Кавказом і протоками. Його омивають усі океани, крім Південного.",
       labels:[[85,52],[20,52],[110,40]]},
-  af:{name:"Африка",color:"var(--af)",
-      area:"≈ 30,3 млн км²",pop:"≈ 1,5 млрд",high:"Кіліманджаро, 5895 м",
+  af:{name:"Африка",color:"var(--af)",area:"≈ 30,3 млн км²",pop:"≈ 1,5 млрд",high:"Кіліманджаро, 5895 м",
       hemi:"Перетинають і екватор, і нульовий меридіан",
       text:"Другий за площею материк і найспекотніший. Тут найбільша пустеля, Сахара, і одна з найдовших річок світу, Ніл.",
       labels:[[20,5],[25,-15]]},
-  na:{name:"Північна Америка",color:"var(--na)",
-      area:"≈ 24,2 млн км²",pop:"≈ 600 млн",high:"Деналі (Мак-Кінлі), 6190 м",
+  na:{name:"Північна Америка",color:"var(--na)",area:"≈ 24,2 млн км²",pop:"≈ 600 млн",high:"Деналі (Мак-Кінлі), 6190 м",
       hemi:"Північна і Західна",
       text:"Третій за площею материк, з'єднаний із Південною Америкою Панамським перешийком. До цієї частини світу належить і Гренландія, найбільший острів Землі.",
       labels:[[-100,45],[-100,40]]},
-  sa:{name:"Південна Америка",color:"var(--sa)",
-      area:"≈ 17,8 млн км²",pop:"≈ 440 млн",high:"Аконкагуа, 6961 м",
+  sa:{name:"Південна Америка",color:"var(--sa)",area:"≈ 17,8 млн км²",pop:"≈ 440 млн",high:"Аконкагуа, 6961 м",
       hemi:"Переважно Південна; Західна",
       text:"Тут тече Амазонка, найповноводніша річка світу, і ростуть найбільші тропічні ліси. Уздовж західного узбережжя тягнуться Анди, найдовша гірська система суходолу.",
       labels:[[-60,-15],[-62,-25]]},
-  au:{name:"Австралія",color:"var(--au)",
-      area:"≈ 7,7 млн км²",pop:"≈ 27 млн",high:"Косцюшко, 2228 м",
+  au:{name:"Австралія",color:"var(--au)",area:"≈ 7,7 млн км²",pop:"≈ 27 млн",high:"Косцюшко, 2228 м",
       hemi:"Південна і Східна",
       text:"Найменший і найпосушливіший материк, цілком у Південній півкулі. Разом з островами Тихого океану (Нова Зеландія, Нова Гвінея, Полінезія) утворює частину світу Австралія та Океанія.",
       labels:[[134,-25],[134,-28]]},
-  an:{name:"Антарктида",color:"var(--an)",
-      area:"≈ 14,1 млн км²",pop:"постійного немає",high:"Масив Вінсон, 4892 м",
+  an:{name:"Антарктида",color:"var(--an)",area:"≈ 14,1 млн км²",pop:"постійного немає",high:"Масив Вінсон, 4892 м",
       hemi:"Південна; розташована навколо Південного полюса",
       text:"Найхолодніший і найвищий у середньому материк, майже повністю вкритий льодом, товщина якого сягає 4,7 км. Тут працює українська станція «Академік Вернадський».",
       labels:[[0,-84],[-100,-78],[60,-77],[150,-78]]},
@@ -189,7 +244,6 @@ function oceanAt(lon,lat){
   else b=lerp(AMER,lat);
   return lon<b?"pac":"atl";
 }
-// Межі океанів для малювання
 const OB={type:"MultiLineString",coordinates:[
   Array.from({length:181},(_,i)=>[-180+i*2,66.5]),
   Array.from({length:181},(_,i)=>[-180+i*2,-60]),
@@ -198,7 +252,7 @@ const OB={type:"MultiLineString",coordinates:[
   [[-67.3,-60],[-67.3,-55],[-71,-55],[-71,-40],[-68,-40],[-68,-19],[-70,-19],[-70,-13],[-76,-13],[-76,7],[-77,8],[-78,8.7],[-79,9.2],[-80,9.0],[-81.5,8.8],[-83,9.3],[-84,10.3],[-84.8,11],[-85.5,12],[-85.5,13],[-87,14],[-89,15],[-91,16],[-93,17],[-98,18],[-100,19],[-101,21],[-101,66.5]]
 ]};
 
-
+// Належність суходолу до материків
 const NA=["Canada","United States of America","Mexico","Greenland","Bahamas","Haiti","Dominican Rep.","Panama","Costa Rica","Nicaragua","Honduras","El Salvador","Guatemala","Belize","Puerto Rico","Jamaica","Cuba"];
 const SA=["Argentina","Chile","Falkland Is.","Uruguay","Brazil","Bolivia","Peru","Colombia","Venezuela","Guyana","Suriname","Ecuador","Paraguay","Trinidad and Tobago"];
 const AU=["Australia","Papua New Guinea","New Zealand","Fiji","Vanuatu","New Caledonia","Solomon Is."];
@@ -211,180 +265,301 @@ function contOf(n,c){
   if(NA.includes(n))return "na"; if(SA.includes(n))return "sa"; if(AU.includes(n))return "au"; if(AF.includes(n))return "af";
   return "eu";
 }
-function buildLand(t){
-  const groups={};
+function buildWorld(t){
+  const polys=[];
   for(const g of t.objects.countries.geometries){
+    const en=g.properties.name;
+    let key=en==="N. Cyprus"?"Cyprus":en==="Somaliland"?"Somalia":en;
     for(const p of (g.type==="Polygon"?[g.arcs]:g.arcs)){
-      const geom={type:"Polygon",arcs:p};
-      const k=contOf(g.properties.name,d3.geoCentroid(topojson.feature(t,geom)));
-      (groups[k]=groups[k]||[]).push(geom);
+      const c=d3.geoCentroid(topojson.feature(t,{type:"Polygon",arcs:p}));
+      let k=key;
+      if(en==="Russia" && Math.abs(c[0]-34.3)<2 && Math.abs(c[1]-45.3)<2) k="Ukraine";   // Крим — Україна
+      polys.push({arcs:p,key:COUNTRIES[k]?k:"_"+en,cont:contOf(en,c)});
     }
   }
-  const out={}; for(const k in groups) out[k]=topojson.merge(t,groups[k]).coordinates; return out;
+  const grp=(f)=>{const m=new Map();for(const p of polys){const id=f(p);if(!m.has(id))m.set(id,[]);m.get(id).push(p);}return m;};
+  const land=[...grp(p=>p.key+"|"+p.cont)].map(([id,ps])=>({type:"Feature",key:ps[0].key,cont:ps[0].cont,
+     geometry:topojson.merge(t,ps.map(p=>({type:"Polygon",arcs:p.arcs})))}));
+  const conts=[...grp(p=>p.cont)].map(([id,ps])=>({type:"Feature",cont:id,geometry:topojson.merge(t,ps.map(p=>({type:"Polygon",arcs:p.arcs})))}));
+  const coll={type:"GeometryCollection",geometries:[...grp(p=>p.key)].map(([k,ps])=>({type:"MultiPolygon",arcs:ps.map(p=>p.arcs),properties:{k}}))};
+  const borders=topojson.mesh(t,coll,(a,b)=>a!==b&&a.properties.k!==b.properties.k);
+  return {land,conts,borders};
 }
-fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(r=>r.json()).then(t=>init(buildLand(t)))
-  .catch(()=>{document.getElementById("globes").innerHTML="<p>Не вдалося завантажити дані карти. Перевірте інтернет і оновіть сторінку.</p>";});
-function init(LAND){
-const tip=document.getElementById("tip");
-const features=Object.entries(LAND).map(([k,c])=>({type:"Feature",id:k,geometry:{type:"MultiPolygon",coordinates:c}}));
+
+const topoReady = window.TOPO ? Promise.resolve(window.TOPO)
+  : fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(r=>r.json());
+topoReady.then(t=>init(buildWorld(t))).catch(e=>{console.error(e);document.getElementById("globes").innerHTML="<p>Не вдалося завантажити дані карти. Перевірте інтернет і оновіть сторінку.</p>";});
+
+function init(W){
+const $=id=>document.getElementById(id);
+const tip=$("tip"), globesEl=$("globes");
 const grat=d3.geoGraticule10();
 const equator={type:"LineString",coordinates:d3.range(-180,181,2).map(x=>[x,0])};
 const primeM={type:"LineString",coordinates:d3.range(-90,91,2).map(y=>[0,y])};
-
+const CAPS=Object.entries(COUNTRIES).filter(([k,v])=>v.c).map(([k,v])=>({key:k,ll:v.ll,name:v.c}));
 const VIEWS={
   we:[{title:"Західна півкуля",sub:"центр 110° з. д.",rot:[110,0]},{title:"Східна півкуля",sub:"центр 70° с. д.",rot:[-70,0]}],
   ns:[{title:"Північна півкуля",sub:"центр на Північному полюсі",rot:[0,-90]},{title:"Південна півкуля",sub:"центр на Південному полюсі",rot:[0,90]}],
 };
-let view="we", selected=null, quiz=null;
-const W=520,R=245;
+let view="we", quiz=null, selKey=null, selCont=null, hovKey=null;
+const Wd=520,R=245;
 const globes=[];
+const on=id=>$(id).classList.contains("on");
 
 function makeGlobe(i){
-  const fig=d3.select("#globes").append("figure");
+  const fig=d3.select(globesEl).append("figure");
   const cap=fig.append("figcaption");
-  const svg=fig.append("svg").attr("class","globe").attr("viewBox",`0 0 ${W} ${W}`);
-  const defs=svg.append("defs");
-  const gid="sea"+i;
+  const svg=fig.append("svg").attr("class","globe").attr("viewBox",`0 0 ${Wd} ${Wd}`);
+  const defs=svg.append("defs"), gid="sea"+i;
   const rg=defs.append("radialGradient").attr("id",gid).attr("cx","40%").attr("cy","35%").attr("r","70%");
   rg.append("stop").attr("offset","0%").attr("stop-color","#d8eef9");
   rg.append("stop").attr("offset","100%").attr("stop-color","#6aa9d1");
-  const proj=d3.geoOrthographic().scale(R).translate([W/2,W/2]).clipAngle(90).precision(.3);
+  const proj=d3.geoOrthographic().scale(R).translate([Wd/2,Wd/2]).clipAngle(90).precision(.3);
   const path=d3.geoPath(proj);
-  const sea=svg.append("path").datum({type:"Sphere"}).attr("fill",`url(#${gid})`).attr("class","seaP");
+  const sea=svg.append("path").datum({type:"Sphere"}).attr("fill",`url(#${gid})`);
   const gr=svg.append("path").datum(grat).attr("class","grat");
   const ob=svg.append("path").datum(OB).attr("class","ob");
-  const lands=svg.append("g").selectAll("path").data(features).join("path")
-    .attr("class","land").attr("fill",d=>CONT[d.id]?CONT[d.id].color:"var(--isl)");
+  const lands=svg.append("g").selectAll("path").data(W.land).join("path")
+    .attr("class","land").attr("fill",d=>CONT[d.cont]?CONT[d.cont].color:"var(--isl)");
+  const bord=svg.append("path").datum(W.borders).attr("class","borders");
+  const coast=svg.append("g").selectAll("path").data(W.conts).join("path").attr("class","coast");
   const eq=svg.append("path").datum(equator).attr("class","eq");
   const pm=svg.append("path").datum(primeM).attr("class","pm");
   svg.append("path").datum({type:"Sphere"}).attr("class","rim");
+  const caps=svg.append("g").selectAll("circle").data(CAPS).join("circle").attr("class","cap").attr("r",2.6);
   const lg=svg.append("g");
-  const g={svg,cap,proj,path,sea,gr,ob,lands,eq,pm,lg};
+  const g={i,svg,cap,proj,path,sea,gr,ob,lands,bord,coast,eq,pm,caps,lg,k:1,tx:0,ty:0};
 
-  // взаємодія з суходолом
-  lands.on("mousemove",(e,d)=>{ if(!CONT[d.id]) return showTip(e,"Острови"); hoverC(d.id); showTip(e,CONT[d.id].name);})
-       .on("mouseleave",()=>{hoverC(null);hideTip();})
-       .on("click",(e,d)=>{ if(g.dragged) return; e.stopPropagation(); if(CONT[d.id]) pick("c",d.id); });
-  // взаємодія з водою
+  lands.on("mousemove",(e,d)=>{
+          if(countryMode() && COUNTRIES[d.key]){ hover(d.key,null); const c=COUNTRIES[d.key]; showTip(e,`${c.f} ${c.n}${c.c?" · "+c.c:""}`); }
+          else if(CONT[d.cont]){ hover(null,d.cont); showTip(e,CONT[d.cont].name); }
+          else { hover(null,null); showTip(e,"Острови"); } })
+       .on("mouseleave",()=>{hover(null,null);hideTip();})
+       .on("click",(e,d)=>{ e.stopPropagation(); onLand(d); });
+  caps.on("mousemove",(e,d)=>{ hover(d.key,null); showTip(e,`${d.name} — столиця: ${COUNTRIES[d.key].n}`); })
+      .on("mouseleave",()=>{hover(null,null);hideTip();})
+      .on("click",(e,d)=>{ e.stopPropagation(); onLand({key:d.key,cont:null}); });
   sea.on("mousemove",e=>{ const o=oceanUnder(g,e); o?showTip(e,OCEAN[o].name):hideTip(); })
      .on("mouseleave",hideTip)
-     .on("click",e=>{ if(g.dragged) return; const o=oceanUnder(g,e); if(o) pick("o",o); });
+     .on("click",e=>{ const o=oceanUnder(g,e); if(o) pick("o",o); });
 
-  // обертання
-  let start,r0;
-  svg.call(d3.drag()
-    .on("start",e=>{start=[e.x,e.y];r0=proj.rotate();g.dragged=false;})
-    .on("drag",e=>{
-      const dx=e.x-start[0],dy=e.y-start[1];
-      if(Math.abs(dx)+Math.abs(dy)>3) g.dragged=true;
-      const k=90/R;
-      proj.rotate([r0[0]+dx*k, Math.max(-90,Math.min(90,r0[1]-dy*k)), r0[2]]);
-      draw(g);
-    })
-    .on("end",()=>setTimeout(()=>g.dragged=false,0)));
+  // обертання (тягнути) і масштаб (коліщатко, два пальці, кнопки)
+  g.zoom=d3.zoom().scaleExtent([1,12]).clickDistance(5)
+    .on("zoom",e=>{
+      const t=e.transform;
+      if(e.sourceEvent && Math.abs(t.k-g.k)<1e-9){
+        const s=90/(R*g.k), r=proj.rotate();
+        proj.rotate([r[0]+(t.x-g.tx)*s, Math.max(-90,Math.min(90,r[1]-(t.y-g.ty)*s)), r[2]]);
+      }
+      g.k=t.k; g.tx=t.x; g.ty=t.y; proj.scale(R*g.k); draw(g);
+    });
+  svg.call(g.zoom).on("dblclick.zoom",null);
   return g;
 }
+function countryMode(){ return quiz ? (quiz.mode!=="co") : on("bCountries"); }
 function oceanUnder(g,e){
   const [x,y]=d3.pointer(e,g.svg.node());
   const ll=g.proj.invert([x,y]); if(!ll) return null;
+  if(d3.geoDistance(ll,[-g.proj.rotate()[0],-g.proj.rotate()[1]])>Math.PI/2) return null;
   return oceanAt(ll[0],ll[1]);
 }
-function visible(g,ll){
-  const r=g.proj.rotate();
-  return d3.geoDistance(ll,[-r[0],-r[1]]);
-}
+function vis(g,ll){ const r=g.proj.rotate(); return d3.geoDistance(ll,[-r[0],-r[1]]); }
 function draw(g){
   g.sea.attr("d",g.path); g.gr.attr("d",g.path); g.ob.attr("d",g.path); g.lands.attr("d",g.path);
-  g.eq.attr("d",g.path); g.pm.attr("d",g.path);
+  g.bord.attr("d",g.path); g.coast.attr("d",g.path); g.eq.attr("d",g.path); g.pm.attr("d",g.path);
   g.svg.selectAll(".rim").attr("d",g.path);
-  const items=[];
-  for(const [k,c] of Object.entries(CONT)) items.push({k,t:c.name,cls:"c",pts:c.labels});
+  const H=Math.PI/2;
+  g.caps.each(function(d){ const v=vis(g,d.ll)<H-0.02; const el=d3.select(this);
+    if(v){const xy=g.proj(d.ll); el.attr("cx",xy[0]).attr("cy",xy[1]).style("visibility",null);} else el.style("visibility","hidden");
+    el.classed("sel",d.key===selKey); });
+  const items=[], lim=H*0.9;
+  if(g.k<3){
+    for(const [k,c] of Object.entries(CONT)) items.push({k,t:c.name,cls:"c",pts:c.labels});
+  }
   for(const [k,o] of Object.entries(OCEAN)){
-    // океан може бути підписаний на одній півкулі двічі, якщо точки далеко одна від одної
-    const vis=o.labels.filter(p=>visible(g,p)<Math.PI/2*0.8).sort((a,b)=>visible(g,a)-visible(g,b));
-    const chosen=[];
-    for(const p of vis){ if(chosen.every(q=>d3.geoDistance(p,q)>1.1)) chosen.push(p); if(chosen.length===2)break; }
-    chosen.forEach((p,i)=>items.push({k:k+i,t:o.name,cls:"o",pts:[p],fixed:true}));
+    const vv=o.labels.filter(p=>vis(g,p)<H*0.8/Math.min(g.k,1.6)).sort((a,b)=>vis(g,a)-vis(g,b));
+    const chosen=[]; for(const p of vv){ if(chosen.every(q=>d3.geoDistance(p,q)>1.1)) chosen.push(p); if(chosen.length===2)break; }
+    chosen.forEach((p,i)=>items.push({k:k+i,t:o.name,cls:"o",pts:[p]}));
   }
   const data=[];
   for(const it of items){
-    const best=it.pts.map(p=>[p,visible(g,p)]).sort((a,b)=>a[1]-b[1])[0];
-    if(best[1]<Math.PI/2*0.9){ const xy=g.proj(best[0]); data.push({...it,x:xy[0],y:xy[1]}); }
+    const best=it.pts.map(p=>[p,vis(g,p)]).sort((a,b)=>a[1]-b[1])[0];
+    if(best[1]<lim){ const xy=g.proj(best[0]); data.push({...it,x:xy[0],y:xy[1]}); }
   }
-  // підпис екватора
-  const eqp=[-g.proj.rotate()[0]+35,0];
-  if(visible(g,eqp)<1.35){const xy=g.proj(eqp);data.push({k:"eqL",t:"екватор",cls:"line",x:xy[0],y:xy[1]-8});}
-  const sel=g.lg.selectAll("text").data(data,d=>d.k);
-  sel.join(en=>en.append("text"),up=>up,ex=>ex.remove())
+  const eqp=[-g.proj.rotate()[0]+35/g.k,0];
+  if(vis(g,eqp)<1.35){const xy=g.proj(eqp);data.push({k:"eqL",t:"екватор",cls:"line",x:xy[0],y:xy[1]-8});}
+  for(const c of CAPS){
+    if(!(g.k>=3 || c.key===selKey || c.key===hovKey)) continue;
+    if(vis(g,c.ll)>H-0.05) continue;
+    const xy=g.proj(c.ll); data.push({k:"cap"+c.key,t:c.name,cls:"k",x:xy[0]+5,y:xy[1]});
+  }
+  g.lg.selectAll("text").data(data,d=>d.k)
+    .join(en=>en.append("text"))
     .attr("class",d=>"lbl "+d.cls).attr("x",d=>d.x).attr("y",d=>d.y)
     .each(function(d){
-      const el=d3.select(this); el.selectAll("tspan").remove(); el.text(null);
+      const el=d3.select(this); el.text(null);
       const words=d.t.split(" ");
-      if(words.length>1 && d.cls!=="line"){
-        // два рядки для довгих назв
+      if(words.length>1 && (d.cls==="c"||d.cls==="o")){
         const mid=d.cls==="o"&&words.length===3?2:1;
-        const a=words.slice(0,mid).join(" "),b=words.slice(mid).join(" ");
-        el.append("tspan").attr("x",d.x).attr("dy","-0.55em").text(a);
-        el.append("tspan").attr("x",d.x).attr("dy","1.15em").text(b);
+        el.append("tspan").attr("x",d.x).attr("dy","-0.55em").text(words.slice(0,mid).join(" "));
+        el.append("tspan").attr("x",d.x).attr("dy","1.15em").text(words.slice(mid).join(" "));
       } else el.text(d.t);
     });
 }
+function drawAll(){ globes.forEach(draw); }
 function setView(v,animate=true){
   view=v;
   VIEWS[v].forEach((cfg,i)=>{
     const g=globes[i];
     g.cap.html(`${cfg.title}<small>${cfg.sub}</small>`);
-    const from=g.proj.rotate(), to=[cfg.rot[0],cfg.rot[1],0];
-    if(!animate){g.proj.rotate(to);draw(g);return;}
-    const ip=d3.interpolate(from,to);
-    d3.transition("rot"+i).duration(900).ease(d3.easeCubicInOut).tween("r",()=>t=>{g.proj.rotate(ip(t));draw(g);});
+    rotateTo(g,[cfg.rot[0],cfg.rot[1],0],animate?900:0);
   });
   document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
 }
-function hoverC(k){ d3.selectAll(".land").classed("hover",d=>d.id===k); }
-function showTip(e,t){ tip.textContent=t; tip.style.left=(e.clientX+14)+"px"; tip.style.top=(e.clientY+12)+"px"; tip.style.opacity=1; }
+function rotateTo(g,to,ms){
+  if(!ms){g.proj.rotate(to);draw(g);return;}
+  const ip=d3.interpolate(g.proj.rotate(),to);
+  d3.transition("rot"+g.i).duration(ms).ease(d3.easeCubicInOut).tween("r",()=>t=>{g.proj.rotate(ip(t));draw(g);});
+}
+function zoomTo(g,k,ms){ g.svg.transition().duration(ms||600).call(g.zoom.scaleTo,k); }
+// Показати точку на ближчому глобусі
+function focusOn(ll,k){
+  let best=globes[0]; for(const g of globes) if(vis(g,ll)<vis(best,ll)) best=g;
+  rotateTo(best,[-ll[0],-ll[1],0],900);
+  if(k && best.k<k) zoomTo(best,k,900);
+}
+function zoomFor(key){ const a=COUNTRIES[key].a||1e6; return a<4e4?5:a<2e5?3.5:a<1e6?2:1; }
+
+function hover(key,cont){
+  if(hovKey!==key){ hovKey=key; drawAll(); }
+  d3.selectAll(".land").classed("hover",d=> key? d.key===key : (cont? d.cont===cont : false));
+}
+function select(key,cont){
+  selKey=key||null; selCont=cont||null;
+  d3.selectAll(".land").classed("sel",d=> selKey? d.key===selKey : (selCont? d.cont===selCont : false));
+  drawAll();
+}
+function showTip(e,t){ if(quiz){hideTip();return;} tip.textContent=t; tip.style.left=(e.clientX+14)+"px"; tip.style.top=(e.clientY+12)+"px"; tip.style.opacity=1; }
 function hideTip(){ tip.style.opacity=0; }
 
+function onLand(d){
+  if(quiz){
+    if(quiz.mode==="cmap" && COUNTRIES[d.key]) return answerMap("k",d.key);
+    if(quiz.mode==="co" && CONT[d.cont]) return answerMap("c",d.cont);
+    if(quiz.mode==="co" && d.key && COUNTRIES[d.key]){ return; }
+    return;
+  }
+  if(on("bCountries") && COUNTRIES[d.key]) pick("k",d.key);
+  else if(CONT[d.cont]) pick("c",d.cont);
+}
+const fmt=n=>n==null?"—":Math.round(n).toLocaleString("uk-UA")+" км²";
 function pick(type,k){
-  if(quiz) return answer(type,k);
-  selected=type==="c"?k:null;
-  d3.selectAll(".land").classed("sel",d=>d.id===selected);
-  const box=document.getElementById("info");
-  if(type==="c"){
-    const c=CONT[k];
+  if(quiz){ if(quiz.mode==="co") answerMap(type,k); return; }
+  const box=$("info");
+  if(type==="k"){
+    const c=COUNTRIES[k]; select(k,null);
+    box.innerHTML=`<div class="kind">Країна</div><h3>${c.f} ${c.n}</h3>
+      <dl><dt>Столиця</dt><dd>${c.c||"—"}</dd><dt>Частина світу</dt><dd>${c.r||"—"}</dd><dt>Площа</dt><dd>${fmt(c.a)}</dd></dl>${c.note?`<p>${c.note}</p>`:""}`;
+  } else if(type==="c"){
+    const c=CONT[k]; select(null,k);
     box.innerHTML=`<div class="kind">Материк</div><h3><span class="sw" style="display:inline-block;vertical-align:-2px;background:${c.color}"></span> ${c.name}</h3>
       <dl><dt>Площа</dt><dd>${c.area}</dd><dt>Населення</dt><dd>${c.pop}</dd><dt>Найвища точка</dt><dd>${c.high}</dd><dt>Півкулі</dt><dd>${c.hemi}</dd></dl><p>${c.text}</p>`;
   } else {
-    const o=OCEAN[k];
+    const o=OCEAN[k]; select(null,null);
     box.innerHTML=`<div class="kind">Океан</div><h3>🌊 ${o.name}</h3>
       <dl><dt>Площа</dt><dd>${o.area}</dd><dt>Найбільша глибина</dt><dd>${o.deep}</dd></dl><p>${o.text}</p>`;
   }
 }
 
-// легенда
+// Легенда і пошук
 const legC=d3.select("#legC").html("");
-for(const [k,c] of Object.entries(CONT)){
+for(const [k,c] of Object.entries(CONT))
   legC.append("div").html(`<span class="sw" style="background:${c.color}"></span>${c.name}`)
-    .on("mouseenter",()=>hoverC(k)).on("mouseleave",()=>hoverC(null)).on("click",()=>pick("c",k));
-}
+    .on("mouseenter",()=>hover(null,k)).on("mouseleave",()=>hover(null,null)).on("click",()=>pick("c",k));
 const legO=d3.select("#legO").html("");
-for(const [k,o] of Object.entries(OCEAN)){
+for(const [k,o] of Object.entries(OCEAN))
   legO.append("div").html(`<span class="sw" style="background:#7fb9dc"></span>${o.name}`).on("click",()=>pick("o",k));
-}
+const norm=s=>s.toLowerCase().replace(/[’ʼ`]/g,"'");
+$("search").addEventListener("input",function(){
+  const q=norm(this.value.trim()); const box=$("sres"); box.innerHTML="";
+  if(q.length<2) return;
+  const score=c=>{const n=norm(c.n),cc=norm(c.c||""); return n.startsWith(q)?0:n.includes(q)?1:cc.startsWith(q)?2:cc.includes(q)?3:9;};
+  Object.entries(COUNTRIES).map(([k,c])=>[k,c,score(c)]).filter(x=>x[2]<9).sort((a,b)=>a[2]-b[2]||a[1].n.localeCompare(b[1].n,"uk")).slice(0,12).forEach(([k,c])=>{
+    const b=document.createElement("button"); b.textContent=`${c.f} ${c.n}${c.c?" — "+c.c:""}`;
+    b.onclick=()=>{ if(quiz) return; if(!on("bCountries")) $("bCountries").click(); pick("k",k); focusOn(c.ll,zoomFor(k)); };
+    box.appendChild(b);
+  });
+});
 
-// вікторина
-const qbar=document.getElementById("quizbar");
+// ---------------- Вікторини ----------------
+const qEl=$("quiz"), qQ=$("qQ"), qCh=$("qCh"), qMsg=$("qMsg"), qScore=$("qScore"), qShow=$("qShow"), qNext=$("qNext");
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+function pool(){
+  const r=$("qRegion").value;
+  return Object.keys(COUNTRIES).filter(k=>{const c=COUNTRIES[k]; return c.q && c.c && (r==="all"||c.r===r);});
+}
+function qName(type,k){ return type==="c"?CONT[k].name: type==="o"?OCEAN[k].name : COUNTRIES[k].n; }
+function startQuiz(mode){
+  quiz={mode,ok:0,n:0,recent:[]};
+  document.querySelectorAll("#qModes button").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
+  $("qRegion").style.display=mode==="co"?"none":"";
+  globesEl.classList.add("hidelabels");
+  if(mode==="cmap") globesEl.classList.remove("nocountries");
+  newQuestion();
+}
+function stopQuiz(){
+  quiz=null; qEl.style.display="none"; $("bQuiz").classList.remove("on");
+  globesEl.classList.toggle("hidelabels",!on("bLabels"));
+  globesEl.classList.toggle("nocountries",!on("bCountries"));
+  select(null,null);
+}
 function newQuestion(){
-  const all=[...Object.keys(CONT).map(k=>["c",k]),...Object.keys(OCEAN).map(k=>["o",k])];
-  let q; do{ q=all[Math.floor(Math.random()*all.length)]; } while(quiz.last && q[1]===quiz.last);
-  quiz.q=q; quiz.last=q[1]; quiz.missed=false;
-  renderQuiz();
+  quiz.missed=false; quiz.done=false; quiz.msgKeep=quiz.msg||""; quiz.msg="";
+  qCh.innerHTML=""; qShow.style.display="none"; qNext.style.display="none";
+  select(null,null);
+  let q, tries=0;
+  if(quiz.mode==="co"){
+    const all=[...Object.keys(CONT).map(k=>["c",k]),...Object.keys(OCEAN).map(k=>["o",k])];
+    do{ q=all[Math.floor(Math.random()*all.length)]; } while(quiz.recent.includes(q[1]) && ++tries<50);
+    quiz.q=q; quiz.text=`Знайдіть на карті: <b>${qName(q[0],q[1])}</b>`; qShow.style.display="";
+  } else {
+    const P=pool(); if(!P.length){ qQ.innerHTML="Немає країн для цієї частини світу."; return; }
+    do{ q=P[Math.floor(Math.random()*P.length)]; } while(quiz.recent.includes(q) && ++tries<50);
+    quiz.q=["k",q]; const c=COUNTRIES[q];
+    if(quiz.mode==="cmap"){
+      quiz.text=`Знайдіть на карті країну: <b>${c.f} ${c.n}</b>`; qShow.style.display="";
+    } else {
+      // варіанти відповіді: спершу з тієї ж частини світу
+      const same=shuffle(Object.keys(COUNTRIES).filter(k=>k!==q&&COUNTRIES[k].q&&COUNTRIES[k].c&&COUNTRIES[k].r===c.r));
+      const other=shuffle(Object.keys(COUNTRIES).filter(k=>k!==q&&COUNTRIES[k].q&&COUNTRIES[k].c&&COUNTRIES[k].r!==c.r));
+      const opts=shuffle([q,...[...same,...other].slice(0,3)]);
+      quiz.opts=opts;
+      if(quiz.mode==="cap"){
+        quiz.text=`Яка столиця країни <b>${c.f} ${c.n}</b>?`;
+        opts.forEach(k=>addChoice(COUNTRIES[k].c,k));
+        select(q,null); focusOn(c.ll,zoomFor(q));
+      } else {
+        quiz.text=`Столицею якої країни є <b>${c.c}</b>?`;
+        opts.forEach(k=>addChoice(`${COUNTRIES[k].f} ${COUNTRIES[k].n}`,k));
+      }
+    }
+    quiz.recent.push(q);
+  }
+  if(quiz.mode==="co") quiz.recent.push(q[1]);
+  if(quiz.recent.length>Math.min(8,Math.floor((quiz.mode==="co"?11:pool().length)/2))) quiz.recent.shift();
+  quiz.msg=quiz.msgKeep; render();
 }
-function qName(type,k){ return type==="c"?CONT[k].name:OCEAN[k].name; }
-function renderQuiz(){
-  qbar.innerHTML=`Знайдіть на карті: <b>${qName(quiz.q[0],quiz.q[1])}</b> &nbsp;·&nbsp; рахунок ${quiz.ok}/${quiz.n}<span class="res">${quiz.msg||""}</span>`;
+function addChoice(label,k){
+  const b=document.createElement("button"); b.textContent=label; b.dataset.k=k;
+  b.onclick=()=>answerChoice(k,b); qCh.appendChild(b);
 }
-function answer(type,k){
+function render(){
+  qQ.innerHTML=quiz.text;
+  qMsg.innerHTML=quiz.msg||"";
+  qScore.textContent=`Рахунок: ${quiz.ok} з ${quiz.n}`;
+}
+function answerMap(type,k){
+  if(!quiz||quiz.done) return;
   const want=quiz.q, wname=qName(want[0],want[1]);
   if(type===want[0]&&k===want[1]){
     if(!quiz.missed){quiz.ok++;quiz.n++;}
@@ -393,23 +568,51 @@ function answer(type,k){
   } else {
     if(!quiz.missed){quiz.n++;quiz.missed=true;}
     quiz.msg=`<span class="bad">✗ Ви вибрали: ${qName(type,k)}. Шукайте далі: ${wname}.</span>`;
-    renderQuiz();
+    render();
   }
 }
-document.getElementById("bQuiz").onclick=function(){
-  if(quiz){quiz=null;qbar.style.display="none";this.classList.remove("on");document.getElementById("globes").classList.remove("hidelabels");
-    if(document.getElementById("bLabels").classList.contains("on")===false)document.getElementById("globes").classList.add("hidelabels");return;}
-  quiz={ok:0,n:0}; this.classList.add("on"); qbar.style.display="block";
-  document.getElementById("globes").classList.add("hidelabels"); newQuestion();
+function answerChoice(k,btn){
+  if(!quiz||quiz.done) return;
+  quiz.done=true; quiz.n++;
+  const q=quiz.q[1], c=COUNTRIES[q], right=k===q;
+  if(right) quiz.ok++;
+  [...qCh.children].forEach(b=>{ b.disabled=true; if(b.dataset.k===q) b.classList.add("right"); });
+  if(!right) btn.classList.add("wrong");
+  quiz.msg = right ? `<span class="ok">✓ Правильно: ${c.f} ${c.n} — ${c.c}.</span>`
+                   : `<span class="bad">✗ Ні. ${c.f} ${c.n} — столиця ${c.c}.</span>`;
+  if(c.note) quiz.msg+=`<br><span style="color:#c9d4dd">${c.note}</span>`;
+  select(q,null); focusOn(c.ll,zoomFor(q));
+  render(); qNext.style.display="";
+  if(right) quiz.timer=setTimeout(()=>{ if(quiz&&quiz.done){ quiz.msg=""; newQuestion(); } },1600);
+}
+qShow.onclick=()=>{
+  if(!quiz||quiz.done) return;
+  if(!quiz.missed){quiz.n++;quiz.missed=true;}
+  quiz.done=true;
+  const [t,k]=quiz.q;
+  if(t==="k"){ const c=COUNTRIES[k]; select(k,null); focusOn(c.ll,zoomFor(k)); quiz.msg=`Ось де ${c.f} ${c.n}, її столиця ${c.c}.`; }
+  else if(t==="c"){ select(null,k); focusOn(CONT[k].labels[0],1); quiz.msg=`Ось де ${CONT[k].name}.`; }
+  else { select(null,null); focusOn(OCEAN[k].labels[0],1); quiz.msg=`Ось де ${OCEAN[k].name}.`; }
+  qShow.style.display="none"; qNext.style.display=""; render();
+};
+qNext.onclick=()=>{ clearTimeout(quiz.timer); quiz.msg=""; newQuestion(); };
+document.querySelectorAll("#qModes button").forEach(b=>b.onclick=()=>startQuiz(b.dataset.m));
+$("qRegion").onchange=()=>{ if(quiz) startQuiz(quiz.mode); };
+$("bQuiz").onclick=function(){
+  if(quiz){ stopQuiz(); return; }
+  this.classList.add("on"); qEl.style.display="block"; startQuiz("cmap");
 };
 
+// Кнопки
 document.querySelectorAll("#viewSeg button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
-document.getElementById("bReset").onclick=()=>setView(view);
-document.getElementById("bLabels").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("hidelabels",!this.classList.contains("on"));};
-document.getElementById("bOB").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("noob",!this.classList.contains("on"));};
-document.getElementById("bGrat").onclick=function(){this.classList.toggle("on");document.getElementById("globes").classList.toggle("nograt",!this.classList.contains("on"));};
+$("bReset").onclick=()=>{ globes.forEach(g=>g.svg.call(g.zoom.transform,d3.zoomIdentity)); setView(view); };
+$("bZoomIn").onclick=()=>globes.forEach(g=>g.svg.transition().duration(400).call(g.zoom.scaleBy,1.6));
+$("bZoomOut").onclick=()=>globes.forEach(g=>g.svg.transition().duration(400).call(g.zoom.scaleBy,1/1.6));
+const toggle=(id,cls)=>$(id).onclick=function(){ this.classList.toggle("on"); if(!quiz||id!=="bLabels") globesEl.classList.toggle(cls,!this.classList.contains("on")); };
+toggle("bLabels","hidelabels"); toggle("bGrat","nograt"); toggle("bOB","noob"); toggle("bCaps","nocaps");
+$("bCountries").onclick=function(){ this.classList.toggle("on"); if(!quiz) globesEl.classList.toggle("nocountries",!this.classList.contains("on")); if(!this.classList.contains("on")) select(null,selCont); };
 
-document.getElementById("globes").innerHTML="";
+globesEl.innerHTML="";
 globes.push(makeGlobe(0),makeGlobe(1));
 setView("we",false);
 }
